@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="720" viewBox="0 0 900 720" fill="none">
+  <defs>
+    <linearGradient id="paint0" x1="72" y1="40" x2="840" y2="680" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD8B4"/>
+      <stop offset="0.5" stop-color="#FF9D56"/>
+      <stop offset="1" stop-color="#E85A0A"/>
+    </linearGradient>
+    <radialGradient id="paint1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(720 140) rotate(130) scale(360 320)">
+      <stop stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#FFF3E6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="900" height="720" rx="48" fill="url(#paint0)"/>
+  <circle cx="220" cy="200" r="140" fill="#FFF3E6" opacity="0.6"/>
+  <circle cx="680" cy="520" r="200" fill="#FFB67B" opacity="0.55"/>
+  <path d="M140 520C220 420 360 380 440 420C520 460 600 560 720 540C800 520 840 460 860 420" stroke="#FFF1E6" stroke-width="26" stroke-linecap="round" opacity="0.7"/>
+  <rect x="120" y="120" width="260" height="340" rx="28" fill="url(#paint1)"/>
+  <rect x="420" y="210" width="300" height="220" rx="28" fill="rgba(255,255,255,0.2)"/>
+  <rect x="320" y="470" width="220" height="140" rx="24" fill="rgba(255,255,255,0.28)"/>
+</svg>
