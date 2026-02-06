@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Intro · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" />
   </head>
   <body>
     <header class="site-header">
@@ -23,25 +24,37 @@
         <p class="eyebrow">Project 01</p>
         <h1>Intro</h1>
         <p class="lead">
-          Define goals, inspirations, and the personal direction for the PS70 journey.
+          Building the website and ideating for the final project.
         </p>
       </div>
     </section>
 
     <section class="project-content">
-      <div class="container info-grid">
-        <div class="info-card" data-animate>
-          <h3>Focus</h3>
-          <p>Introduce yourself, what you want to build, and what you hope to learn.</p>
-        </div>
-        <div class="info-card" data-animate>
-          <h3>Highlights</h3>
-          <p>Share early sketches, references, or materials that inspire you.</p>
-        </div>
-        <div class="info-card" data-animate>
-          <h3>Next Steps</h3>
-          <p>Outline the first build milestones you plan to tackle.</p>
-        </div>
+      <div class="container">
+        <article class="blog-flow" data-animate>
+          <h3>Building The Website</h3>
+          <div class="blog-links">
+            <a class="icon-link" href="https://github.com/AaditSaluja/ps70" aria-label="Source code">
+              <span class="material-symbols-rounded" aria-hidden="true">code</span>
+              Github Repo
+            </a>
+          </div>
+          <p class="blog-meta">Last Updated on Feb 6, 2026</p>
+          <p>Having not made a website in years, I spent a significant amount of time exploring interesting personal website designs on <a href="https://www.dribbble.com/" style="color:brown">Dribbble</a>. While far beyond my abilities to create, I absolutely loved <a href="https://bryantcodes.art/" style="color:brown">this.</a> For my own website, I liked the idea of keeping it simple and using a material design inspired website.</p>
+          <p>
+            Then for actually building this website, I picked out a broad color scheme I liked from <a href="https://www.coolors.co/" style="color:brown">Coolors</a>. Using this, some design ideas from my search on dribbble, and codex CLI, I brought this website to life. After codex's first run, I had to spend some time cleaning up inflated code, redundant structures, and redesigning elements according to the PS70 needs. 
+          </p>
+          <p>
+            Having the first pass through Codex here helped me save some time that would have been spent giving fundamental structure to the website.
+          </p>
+
+          <h3>Final Project Ideas</h3>
+          <ul>
+            <li>Circular Line Following Array: In the little high school robotics I did, we used to always use either a flat 1d array or a camera to follow a line. This made me curious about the potential of building a circular 2-d array where the line following goal would be to balance the line alongside the vertical diameter of the circle. I found this interesting because fabricating a sensor array, tuning it for a chassis with a low turning radius, and figuring out how a PID works in this scenario. Here's a quick draft I made of the idea on google slides. <img src="../assets/Drawing.png" alt="Project image placeholder" /></li>
+            <li>A Clutch Style Mechanism: I was curious about how to use a single motor to perform tasks about multiple axis of rotations. As I thought about this more, the idea of making an automatic gearbox/transmission system seemed fascinating. Still thinking about where I would like to use it but even the idea of making a clutch-type gearbox seems fascinating to me in isolation.</li>
+          </ul>
+         
+        </article>
       </div>
     </section>
 

@@ -17,4 +17,8 @@
   <rect x="120" y="120" width="260" height="340" rx="28" fill="url(#paint1)"/>
   <rect x="420" y="210" width="300" height="220" rx="28" fill="rgba(255,255,255,0.2)"/>
   <rect x="320" y="470" width="220" height="140" rx="24" fill="rgba(255,255,255,0.28)"/>
+  <text x="450" y="600" font-family="Manrope, Segoe UI, sans-serif" font-size="31" fill="#5A2B12" text-anchor="middle">
+    <tspan x="450" dy="0">Soon to be replaced by the images of</tspan>
+    <tspan x="450" dy="36">work I have done in this class</tspan>
+  </text>
 </svg>
