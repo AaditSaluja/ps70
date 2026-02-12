@@ -55,28 +55,14 @@
           <h2>More of the Box(es)</h2>
           <p></p>
         </div>
-        <div class="gallery-grid" data-animate>
-          <figure class="gallery-item" data-full="../assets/1.jpeg">
-            <img src="../assets/1.jpeg" alt="Gallery image 1" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/2.jpeg">
-            <img src="../assets/2.jpeg" alt="Gallery image 2" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/3.jpeg">
-            <img src="../assets/3.jpeg" alt="Gallery image 3" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/4.jpeg">
-            <img src="../assets/4.jpeg" alt="Gallery image 4" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/5.jpeg">
-            <img src="../assets/5.jpeg" alt="Gallery image 5" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/6.jpeg">
-            <img src="../assets/6.jpeg" alt="Gallery image 6" loading="lazy" decoding="async" />
-          </figure>
-          <figure class="gallery-item" data-full="../assets/7.jpeg">
-            <img src="../assets/7.jpeg" alt="Gallery image 7" loading="lazy" decoding="async" />
-          </figure>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/1.jpeg" alt="Gallery image 1" loading="lazy" decoding="async" />
+          <img src="../assets/2.jpeg" alt="Gallery image 2" loading="lazy" decoding="async" />
+          <img src="../assets/3.jpeg" alt="Gallery image 3" loading="lazy" decoding="async" />
+          <img src="../assets/4.jpeg" alt="Gallery image 4" loading="lazy" decoding="async" />
+          <img src="../assets/5.jpeg" alt="Gallery image 5" loading="lazy" decoding="async" />
+          <img src="../assets/6.jpeg" alt="Gallery image 6" loading="lazy" decoding="async" />
+          <img src="../assets/7.jpeg" alt="Gallery image 7" loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
@@ -106,11 +92,6 @@
         </div>
       </div>
     </section>
-
-    <div class="gallery-modal" id="gallery-modal" aria-hidden="true">
-      <button class="gallery-close" type="button" aria-label="Close gallery">×</button>
-      <img id="gallery-modal-image" alt="Expanded gallery view" />
-    </div>
 
 
 <!-- 
@@ -235,40 +216,6 @@
       initStlViewer("stl-canvas-2", "../assets/tubelight.stl");
       initStlViewer("stl-canvas-3", "../assets/reed.stl");
 
-      const modal = document.getElementById("gallery-modal");
-      const modalImage = document.getElementById("gallery-modal-image");
-      const closeButton = modal.querySelector(".gallery-close");
-
-      document.querySelectorAll(".gallery-item").forEach((item) => {
-        item.addEventListener("click", () => {
-          const full = item.getAttribute("data-full");
-          const img = item.querySelector("img");
-          modalImage.src = full || (img ? img.src : "");
-          modal.classList.add("is-open");
-          modal.setAttribute("aria-hidden", "false");
-          document.body.style.overflow = "hidden";
-        });
-      });
-
-      const closeModal = () => {
-        modal.classList.remove("is-open");
-        modal.setAttribute("aria-hidden", "true");
-        document.body.style.overflow = "";
-      };
-
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          closeModal();
-        }
-      });
-
-      closeButton.addEventListener("click", closeModal);
-
-      window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && modal.classList.contains("is-open")) {
-          closeModal();
-        }
-      });
     </script>
   </body>
 </html>
