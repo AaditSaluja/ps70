@@ -56,38 +56,30 @@
           <p></p>
         </div>
         <div class="gallery-grid" data-animate>
-          <button class="gallery-item" type="button">
-            <img src="../assets/1.jpeg" alt="Gallery image 1" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/2.jpeg" alt="Gallery image 2" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/3.jpeg" alt="Gallery image 3" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/4.jpeg" alt="Gallery image 4" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/5.jpeg" alt="Gallery image 5" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/6.jpeg" alt="Gallery image 6" />
-          </button>
-          <button class="gallery-item" type="button">
-            <img src="../assets/7.jpeg" alt="Gallery image 7" />
-          </button>
-          <!-- <button class="gallery-item" type="button">
-            <img src="../assets/8.jpeg" alt="Gallery image 8" />
-          </button> -->
+          <figure class="gallery-item" data-full="../assets/1.jpeg">
+            <img src="../assets/1.jpeg" alt="Gallery image 1" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/2.jpeg">
+            <img src="../assets/2.jpeg" alt="Gallery image 2" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/3.jpeg">
+            <img src="../assets/3.jpeg" alt="Gallery image 3" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/4.jpeg">
+            <img src="../assets/4.jpeg" alt="Gallery image 4" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/5.jpeg">
+            <img src="../assets/5.jpeg" alt="Gallery image 5" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/6.jpeg">
+            <img src="../assets/6.jpeg" alt="Gallery image 6" loading="lazy" decoding="async" />
+          </figure>
+          <figure class="gallery-item" data-full="../assets/7.jpeg">
+            <img src="../assets/7.jpeg" alt="Gallery image 7" loading="lazy" decoding="async" />
+          </figure>
         </div>
       </div>
     </section>
-
-    <div class="gallery-modal" id="gallery-modal" aria-hidden="true">
-      <button class="gallery-close" type="button" aria-label="Close gallery">×</button>
-      <img id="gallery-modal-image" alt="Expanded gallery view" />
-    </div>
 
     <section class="project-content">
       <div class="container">
@@ -247,9 +239,11 @@
       const modalImage = document.getElementById("gallery-modal-image");
       const closeButton = modal.querySelector(".gallery-close");
 
-      document.querySelectorAll(".gallery-item img").forEach((img) => {
-        img.addEventListener("click", () => {
-          modalImage.src = img.src;
+      document.querySelectorAll(".gallery-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const full = item.getAttribute("data-full");
+          const img = item.querySelector("img");
+          modalImage.src = full || (img ? img.src : "");
           modal.classList.add("is-open");
           modal.setAttribute("aria-hidden", "false");
           document.body.style.overflow = "hidden";
