@@ -369,6 +369,21 @@ a {
   border: 0;
 }
 
+.stl-viewer {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  padding: 16px;
+  border: 1px solid rgba(255, 138, 50, 0.25);
+  box-shadow: var(--shadow-1);
+}
+
+.stl-viewer canvas {
+  width: 100%;
+  min-height: 360px;
+  display: block;
+  border-radius: 18px;
+}
+
 .ripple {
   position: absolute;
   border-radius: 50%;
