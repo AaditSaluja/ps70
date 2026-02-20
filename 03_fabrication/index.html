@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Fabrication · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/arduino-light.min.css"
+    />
+    <style>
+      .code-block {
+        background: rgba(255, 250, 246, 0.9);
+        border: 1px solid rgba(255, 138, 50, 0.25);
+        border-radius: 18px;
+        box-shadow: var(--shadow-1);
+        padding: 18px 20px;
+        overflow-x: auto;
+      }
+
+      .code-block pre {
+        margin: 0;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #2b2018;
+      }
+
+      .code-block pre code {
+        background: transparent;
+        padding: 0;
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -25,6 +53,91 @@
         <p class="lead">
           <!-- Translate concepts into physical builds, focusing on materials and assembly. -->
         </p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Demo Video</h2>
+          <p>Embed your fabrication demo, test run, or time-lapse here.</p>
+        </div>
+        <div class="video-embed" data-animate>
+          <iframe
+            src="https://drive.google.com/file/d/11Dt_XoRgNHwtgNO4otzvpOt9b5q3y3ea/view?usp=sharing"
+            title="Fabrication demo video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <p class="caption">Video</p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Photo Gallery</h2>
+          <p>Swap these placeholders with build photos or fabrication steps.</p>
+        </div>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/cl1.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl2.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl3.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl4.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl5.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl6.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/cl7.jpeg" alt="Fabrication photo 1" />
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Arduino Code</h2>
+          <p>Paste your Arduino sketch here. Use this block as a drop-in target.</p>
+        </div>
+        <div class="code-block" data-animate>
+          <pre><code class="language-arduino">// Replace this with your Arduino code.
+const int A1A = D0;
+const int A1B = D1;
+
+const int BTN1 = D2;
+const int BTN2 = D3;
+
+void setup() {
+  pinMode(A1A, OUTPUT);
+  pinMode(A1B, OUTPUT);
+
+  pinMode(BTN1, INPUT_PULLUP);
+  pinMode(BTN2, INPUT_PULLUP);
+
+  digitalWrite(A1A, LOW);
+  digitalWrite(A1B, LOW);
+}
+
+void loop() {
+  int b1 = digitalRead(BTN1);
+  int b2 = digitalRead(BTN2);
+
+  if (b1 == LOW && b2 == HIGH) {
+    // Direction 1
+    digitalWrite(A1A, HIGH);
+    digitalWrite(A1B, LOW);
+  }
+  else if (b2 == LOW && b1 == HIGH) {
+    // Direction 2
+    digitalWrite(A1A, LOW);
+    digitalWrite(A1B, HIGH);
+  }
+  else {
+    // Stop motor
+    digitalWrite(A1A, LOW);
+    digitalWrite(A1B, LOW);
+  }
+}</code></pre>
+        </div>
       </div>
     </section>
 <!-- 
@@ -52,5 +165,13 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+    ></script>
+    <script>
+      if (window.hljs) {
+        window.hljs.highlightAll();
+      }
+    </script>
   </body>
 </html>
