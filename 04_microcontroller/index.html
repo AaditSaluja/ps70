@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Microcontroller · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/arduino-light.min.css"
+    />
+    <style>
+      .code-block {
+        background: rgba(255, 250, 246, 0.9);
+        border: 1px solid rgba(255, 138, 50, 0.25);
+        border-radius: 18px;
+        box-shadow: var(--shadow-1);
+        padding: 18px 20px;
+        overflow-x: auto;
+      }
+
+      .code-block pre {
+        margin: 0;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #2b2018;
+      }
+
+      .code-block pre code {
+        background: transparent;
+        padding: 0;
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -21,26 +49,150 @@
     <section class="project-hero">
       <div class="container">
         <p class="eyebrow">Project 04</p>
-        <h1>Microcontroller</h1>
+        <h1>Microcontroller Programming</h1>
         <p class="lead">
-          <!-- Document wiring, firmware, and testing for embedded systems. -->
+          I stuck to a simple 2-motor gate setup, using my Microcontroller to build a pseudo-RC remote type circuit. 
         </p>
       </div>
     </section>
 
-    <!-- <section class="project-content">
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Work Demo</h2>
+          <p>For this week, I tried to use the class based programming techniques to build a RC-Motor type remote. The idea being that one button controls the movement of motor A while the other controls the movement of motor B. On their own, they default to forward movement. However, the third button acts as the reverse toggle. When either (or both) motor switches are pressed with the reverse toggle, the motors move in reverse direction. There's a helpful LED to indicate whenever the reverse button is toggled down!</p>
+        </div>
+        <div class="video-embed" data-animate>
+         <iframe width="560" height="315" src="https://youtube.com/shorts/rNM_ye8nKUU?si=z038N1MXThiVcGF7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <p class="caption">
+          Video · If the embed fails, watch on YouTube:
+          <a href="https://www.youtube.com/watch?v=2oduPCehH3Y">Open video</a>
+        </p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Mini Photo Gallery and the circuit</h2>
+          <p>At the bottom is the circuit I drew using <a href="https://wokwi.com/" style="color:brown">Wokwi</a>. With no DC motors or motor driver, I used placeholders instead of them. The circuit in itself is pretty standard. I tried to think of different ways to engage both forward and reverse movement and this seemed to be a nice tradeoff between number of buttons and freedom of movement.</p>
+        </div>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/w41.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/w42.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/w43.jpeg" alt="Fabrication photo 1" />
+          <img src="../assets/w44.jpeg" alt="Fabrication photo 1" />
+        </div>
+        <img src="../assets/wk4circ.png" alt="Fabrication photo 1" />
+
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>The Code</h2>
+          <p>Finally, here's the code. I restructured the class based 2-motor movement code from class but replacing timers with a toggle button associated with each motor. Further, the reverse motor acts as a global toggle for both. As a potential next step, I think having a system where the motors keep moving unless toggled again could be interesting. I think having a 3-state variable for each motor, capturing forward, reverse, and no movement would probably be the best way to do something like this.</p>
+        </div>
+        <div class="code-block" data-animate>
+          <pre><code class="language-arduino">// Motors
+int B1A = D2;
+int B1B = D3;
+int A1A = D0;
+int A1B = D1;
+
+// Button pins
+int BTN_A = D4;
+int BTN_B = D5;
+int BTN_R = D6;
+
+// Reverse Indicator
+int LED = D7;
+
+class Motor{
+  int A;
+  int B;
+  int btn;
+
+  public:
+  Motor(int pA, int pB, int bt){
+      A = pA;
+      B = pB;
+      btn = bt;
+
+      pinMode(A, OUTPUT);
+      pinMode(B, OUTPUT);
+      pinMode(btn, INPUT_PULLUP);
+
+      stop();
+  }
+  
+  void update(bool reverseActive) {
+    bool toMove = (digitalRead(btn) == LOW); // checks if local button is pressed
+
+    if (!toMove) {
+      stop();
+    } else {
+      if (reverseActive) backward(); // direction dependent on global reverse button
+      else forward();
+    }
+  }
+
+  // forward move
+  void forward(){
+    digitalWrite(A, HIGH);
+    digitalWrite(B, LOW);
+  }
+
+  // backward move
+  void backward(){
+    digitalWrite(A, LOW);
+    digitalWrite(B, HIGH);
+  }
+
+  // stop motor
+  void stop(){
+    digitalWrite(A, LOW);
+    digitalWrite(B, LOW);
+  }
+};
+
+Motor m1(A1A, A1B, BTN_A);
+Motor m2(B1A, B1B, BTN_B);
+
+void setup(){
+  pinMode(BTN_R, INPUT_PULLUP);
+  pinMode(LED, OUTPUT);
+}
+
+void loop(){
+
+  bool reverseMode = (digitalRead(BTN_R) == LOW);
+
+  digitalWrite(LED, reverseMode);
+
+  m1.update(reverseMode);
+  m2.update(reverseMode);
+
+}</code></pre>
+        </div>
+      </div>
+    </section>
+<!-- 
+    <section class="project-content">
       <div class="container info-grid">
         <div class="info-card" data-animate>
-          <h3>Hardware</h3>
-          <p>List board specs, pin maps, and circuit diagrams.</p>
+          <h3>Build Notes</h3>
+          <p>Describe material choices, constraints, and fabrication steps.</p>
         </div>
         <div class="info-card" data-animate>
-          <h3>Firmware</h3>
-          <p>Share code snippets, libraries, and debugging notes.</p>
+          <h3>Process Photos</h3>
+          <p>Swap in images or diagrams to show progress.</p>
         </div>
         <div class="info-card" data-animate>
-          <h3>Results</h3>
-          <p>Include videos or GIFs of the system in action.</p>
+          <h3>Reflections</h3>
+          <p>Capture what worked, what failed, and what you would change.</p>
         </div>
       </div>
     </section> -->
@@ -52,5 +204,13 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+    ></script>
+    <script>
+      if (window.hljs) {
+        window.hljs.highlightAll();
+      }
+    </script>
   </body>
 </html>
