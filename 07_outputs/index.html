@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Outputs · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
   </head>
   <body>
     <header class="site-header">
@@ -22,28 +30,21 @@
       <div class="container">
         <p class="eyebrow">Project 07</p>
         <h1>Outputs</h1>
-        <p class="lead">
-          <!-- Design feedback loops through light, motion, sound, or actuation. -->
-        </p>
+        <p class="lead"></p>
       </div>
     </section>
 
-    <!-- <section class="project-content">
-      <div class="container info-grid">
-        <div class="info-card" data-animate>
-          <h3>Actuation</h3>
-          <p>Detail hardware choices and power requirements.</p>
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Project MVP</h2>
         </div>
-        <div class="info-card" data-animate>
-          <h3>Interface</h3>
-          <p>Show how outputs communicate with users.</p>
+        <div class="stl-viewer" data-animate>
+          <canvas id="stl-canvas-mvp" aria-label="STL preview project MVP"></canvas>
         </div>
-        <div class="info-card" data-animate>
-          <h3>Demo</h3>
-          <p>Embed short clips or GIFs that capture motion.</p>
-        </div>
+        <img src="../assets/ChassisPlan.png" alt="Chassis plan" style="width: 100%; display: block;" />
       </div>
-    </section> -->
+    </section>
 
     <footer class="site-footer">
       <div class="container">
@@ -52,5 +53,85 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+      const initStlViewer = (canvasId, filePath) => {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const container = canvas.closest(".stl-viewer");
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xfff4ea);
+
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.set(0, 0, 120);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(40, 60, 80);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        const loader = new STLLoader();
+        loader.load(filePath, (geometry) => {
+          geometry.computeVertexNormals();
+          geometry.center();
+          const material = new THREE.MeshStandardMaterial({
+            color: 0xf66d14,
+            metalness: 0.1,
+            roughness: 0.35,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          scene.add(mesh);
+
+          const box = new THREE.Box3().setFromObject(mesh);
+          const size = new THREE.Vector3();
+          const center = new THREE.Vector3();
+          box.getSize(size);
+          box.getCenter(center);
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const fov = (camera.fov * Math.PI) / 180;
+          const cameraZ = Math.abs((maxDim / 2) / Math.tan(fov / 2)) * 1.4;
+
+          camera.position.set(center.x, center.y, cameraZ);
+          camera.near = maxDim / 100;
+          camera.far = maxDim * 10;
+          camera.updateProjectionMatrix();
+          controls.target.copy(center);
+          controls.update();
+          render();
+        }, undefined, (error) => {
+          console.error(`Failed to load STL (${filePath}):`, error);
+        });
+
+        const resize = () => {
+          const width = container.clientWidth;
+          const height = Math.max(320, Math.round(container.clientWidth * 0.6));
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+          render();
+        };
+
+        const render = () => {
+          controls.update();
+          renderer.render(scene, camera);
+        };
+
+        window.addEventListener("resize", resize);
+        resize();
+        renderer.setAnimationLoop(render);
+      };
+
+      initStlViewer("stl-canvas-mvp", "../assets/FinalProh.stl");
+    </script>
   </body>
 </html>
