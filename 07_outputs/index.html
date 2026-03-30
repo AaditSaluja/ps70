@@ -33,7 +33,7 @@
       }
 
       .video-embed.vertical.large {
-        padding-top: 125%;
+        padding-top: 100%;
       }
 
       .video-card .caption {
@@ -103,6 +103,118 @@
         </div>
         <p>The circuit simply plays connects the servo and DC motor with a push button. By default, the DC motor drived the gearbox forward at 1x speed. When we press the button, the motor slows down, the servo toggles the driving ring to the other gear switching to 2x speed. Everytime we next press the button, the process repeats toggling between 1x and 2x speed. You can expand the code here.</p>
         <img src="../assets/mvpcirc.png" alt="Circuit diagram" style="width: 100%; display: block;" />
+        <details style="margin-top: 16px;">
+          <summary>View code</summary>
+          <div class="code-block" style="margin-top: 12px;">
+            <pre><code class="language-cpp">#include &lt;ESP32Servo.h&gt;
+
+class GearMotorController {
+private:
+  Servo servo;
+
+  const int servoPin;
+  const int motorPin1;
+  const int motorPin2;
+  const int buttonPin;
+
+  const int posA = 62;
+  const int posB = 29;
+
+  int currentServoPos;
+  bool atPosA;
+  bool lastButtonState;
+
+public:
+  GearMotorController(int sPin, int mPin1, int mPin2, int bPin)
+      : servoPin(sPin),
+        motorPin1(mPin1),
+        motorPin2(mPin2),
+        buttonPin(bPin),
+        currentServoPos(62),
+        atPosA(true),
+        lastButtonState(HIGH) {}
+
+  void begin() {
+    pinMode(motorPin1, OUTPUT);
+    pinMode(motorPin2, OUTPUT);
+    pinMode(buttonPin, INPUT_PULLUP);  // button to GND
+
+    servo.attach(servoPin);
+
+    // Start servo at 62, experimentally had to tune this
+    servo.write(posA);
+    currentServoPos = posA;
+    delay(1000);
+
+    startMotor();
+  }
+
+  void update() {
+    bool buttonState = digitalRead(buttonPin);
+
+    // Detect button press (HIGH -> LOW)
+    if (lastButtonState == HIGH && buttonState == LOW) {
+      handleButtonPress();
+      delay(50);  // simple debounce
+    }
+
+    lastButtonState = buttonState;
+  }
+
+private:
+  void startMotor() {
+    digitalWrite(motorPin1, LOW);
+    digitalWrite(motorPin2, LOW);
+  }
+
+  void stopMotor() {
+    digitalWrite(motorPin1, LOW);
+    digitalWrite(motorPin2, LOW);
+  }
+
+  void moveServoSlowly(int targetPos) {
+    if (currentServoPos < targetPos) {
+      for (int pos = currentServoPos; pos <= targetPos; pos++) {
+        servo.write(pos);
+        delay(30);
+      }
+    } else {
+      for (int pos = currentServoPos; pos >= targetPos; pos--) {
+        servo.write(pos);
+        delay(30);
+      }
+    }
+    currentServoPos = targetPos;
+  }
+
+  void handleButtonPress() {
+    stopMotor();
+    delay(300);
+
+    if (atPosA) {
+      moveServoSlowly(posB);  // 62 -> 29
+      atPosA = false;
+    } else {
+      moveServoSlowly(posA);  // 29 -> 62
+      atPosA = true;
+    }
+
+    delay(300);
+    startMotor();
+  }
+};
+
+GearMotorController controller(D0, D1, D2, D3);
+
+void setup() {
+  controller.begin();
+}
+
+void loop() {
+  controller.update();
+}</code></pre>
+          </div>
+        </details>
       </div>
     </section>
 
