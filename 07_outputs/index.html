@@ -21,7 +21,7 @@
       }
 
       .video-embed.vertical {
-        padding-top: 177.78%;
+        padding-top: 125%;
         width: 100%;
         max-width: 240px;
         margin: 0;
@@ -30,6 +30,10 @@
       .video-embed.vertical.large {
         max-width: 560px;
         margin: 12px auto;
+      }
+
+      .video-embed.vertical.large {
+        padding-top: 125%;
       }
 
       .video-card .caption {
@@ -53,7 +57,25 @@
       <div class="container">
         <p class="eyebrow">Project 07</p>
         <h1>MVP</h1>
-        <p class="lead"></p>
+        <p>My plan for the final project is to build an RC car with an automatic gearbox, i.e. with the press of a button I would like to switch gears to adjust the speed of the car. For the purpose of the MVP, I sketched out my plan for the RC car and implemented the automated gearbox. With this out of the way, my next 3 big steps are building a chassis, an Ackermann steering for forward gears, and a wireless controller. The gearbox for me was the most challenging part since building gears that can switch orientation seemed non trivial. I used a driving ring mechanism that is detailed more below.</p>
+
+        </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Driving Ring Mechanism</h2>
+        </div>
+        <p>The most challenging aspect was this was implementing the driving ring mechanism. I tried to demonstrate it here with diagram. I am using 4mm rectangular carbon fiber dowels as axels. That might help understand why the circular holed gear free moves around the axel. We lock it in place to rotate by placing the driving ring in it. The triangle approaches ushers the driving ring in place, locking the 2 gears together. This is handled through a servo. The paths taken are explained with the lines at the bottom in image 2. In the left image, we see the path taken when locked to the gear closer to the motor (leading to 2x speed as we go from 3cm to 1.5cm spur) and in the other scenario it is the base speed since the gears go from 3->3; 2.25->2.25. I plan to attach the output to the rear axel using a bevel gear. The steering will exist for the front gears.</p>
+        <img src="../assets/mvp_exp1.png" alt="Circuit diagram" style="width: 100%; display: block;" />
+        <img src="../assets/mvp_exp2.png" alt="Circuit diagram" style="width: 100%; display: block;" />
+        <h3>Other Implementation Details</h3>
+        <p>I 3-d printed the gears, the motor to axel connector and tight-fit nuts for axel ends. The spacers inside the gearbox were laser cut, so was the box. Currently the housing for the DC motor is just the base, that will fit into the chassis alongside the gearbox, I will build housing to secure the motor from the top too. Currently there is some friction in the 2x speed path that leads to the gears slipping, will fix that by reinforcing the connections and cleaning the 3d printed gears. The chassis should be pretty easy to design once I nail the Ackermann steering. Here is the general steering plan <a href="#steering-plan">here</a> in this diagram.</p>
+        <details id="steering-plan" style="margin-top: 12px;">
+          <summary>Steering plan diagram (expand)</summary>
+          <img src="../assets/ChassisPlan.png" alt="Steering plan diagram" style="width: 100%; display: block; margin-top: 12px;" />
+        </details>
       </div>
     </section>
 
@@ -74,10 +96,20 @@
       </div>
     </section>
 
+        <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Circuit Diagram and Code</h2>
+        </div>
+        <p>The circuit simply plays connects the servo and DC motor with a push button. By default, the DC motor drived the gearbox forward at 1x speed. When we press the button, the motor slows down, the servo toggles the driving ring to the other gear switching to 2x speed. Everytime we next press the button, the process repeats toggling between 1x and 2x speed. You can expand the code here.</p>
+        <img src="../assets/mvpcirc.png" alt="Circuit diagram" style="width: 100%; display: block;" />
+      </div>
+    </section>
+
     <section class="project-content">
       <div class="container">
         <div class="section-title" data-animate>
-          <h2>YouTube Gallery</h2>
+          <h2>Video Gallery</h2>
         </div>
         <div class="video-gallery" data-animate>
           <div class="video-card">
@@ -147,15 +179,6 @@
           Link just in case embed fails:
           <a href="https://youtube.com/shorts/RuzufznhiqA?feature=share">Link</a>
         </p>
-      </div>
-    </section>
-
-    <section class="project-content">
-      <div class="container">
-        <div class="section-title" data-animate>
-          <h2>Circuit Diagram</h2>
-        </div>
-        <img src="../assets/mvpcirc.jpeg" alt="Circuit diagram" style="width: 100%; display: block;" />
       </div>
     </section>
 
