@@ -46,12 +46,12 @@
       </div>
     </header>
 
-    <section class="project-hero">
+        <section class="project-hero">
       <div class="container">
         <p class="eyebrow">Project 09</p>
-        <h1>Networking</h1>
+        <h1>Networking: A 2-player Snake Game Powered by ESP Now</h1>
         <p class="lead">
-          <!-- Connect devices, share data, and orchestrate systems. -->
+          We created a 2-player snake game using ESP Now. Here, one of the users controls the positioning of the fruits while the other user controls the snake. Additionally, the food controller also has access to a special power to dim the game board! We used potentiometers to control the dimming and food placement, discretizing the pot output into width, height, and the brightness range.
         </p>
       </div>
     </section>
@@ -75,6 +75,22 @@
 
     <section class="project-content">
       <div class="container">
+                <div class="section-title" data-animate>
+          <h2>Parts Used</h2>
+        </div>
+        <p>
+          <ul>
+            <li> 2x ESP32 </li>
+            <li> 3x Potentiometers </li>
+            <li> 1x Push button </li>
+            <li> Jumper wires </li>
+            <li> Breadboard </li>
+            <li> 2x Antennas  </li>
+            <li> 1x Joystick </li>
+          </ul>
+        
+        We first tried to use Wifi, but the lag was just too high. The game worked but with a terrible refresh rate and a lot of lost/laggy movements. So we switched to ESP Now. 
+        </p>
         <div class="section-title" data-animate>
           <h2>David vs Victor's Snake-Off</h2>
         </div>
@@ -113,9 +129,9 @@
           <h2>Circuit</h2>
         </div>
         <div class="simple-gallery" data-animate>
-          <img src="../assets/Wk9_Circ1.HEIC" alt="Circuit photo 1" />
-          <img src="../assets/Wk9_Circ2.HEIC" alt="Circuit photo 2" />
-          <img src="../assets/Wk9_CircTouch.HEIC" alt="Circuit photo 3" />
+          <img src="../assets/Wk9_Circ1.jpg" alt="Circuit photo 1" />
+          <img src="../assets/Wk9_Circ2.jpg" alt="Circuit photo 2" />
+          <img src="../assets/Wk9_CircTouch.jpg" alt="Circuit photo 3" />
         </div>
       </div>
     </section>
@@ -144,9 +160,9 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
 // ================= Pins =================
-const int POT_X_PIN = D0;         // physical pot on D0 -> controls Y
-const int POT_Y_PIN = D1;         // physical pot on D1 -> controls X
-const int BRIGHTNESS_POT_PIN = D2; // new pot on D2 -> opacity / brightness
+const int POT_X_PIN = D0;         // physical pot on D0 -&gt; controls Y
+const int POT_Y_PIN = D1;         // physical pot on D1 -&gt; controls X
+const int BRIGHTNESS_POT_PIN = D2; // new pot on D2 -&gt; opacity / brightness
 const int BUTTON_PIN = D3;        // fruit spawn button
 
 // ================= Game config =================
@@ -342,7 +358,7 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
       }
 
       let text = `Score: ${state.score} | Fruits: ${state.activeFruitCount}`;
-      if (state.activeFruitCount &gt; 0 && !state.gameOver) {
+      if (state.activeFruitCount &gt; 0 &amp;&amp; !state.gameOver) {
         text += ` | Timer: ${state.timeLeft}s`;
       }
       if (state.gameOver) {
@@ -405,9 +421,9 @@ void setupEspNow() {
     if (len != sizeof(ControlPacket)) return;
 
     ControlPacket pkt;
-    memcpy(&pkt, incomingData, sizeof(pkt));
+    memcpy(&amp;pkt, incomingData, sizeof(pkt));
 
-    if (pkt.type == 1 && pkt.direction <= 3) {
+    if (pkt.type == 1 &amp;&amp; pkt.direction &lt;= 3) {
       pendingDir = pkt.direction;
       hasPendingDir = true;
     }
@@ -439,28 +455,28 @@ int mapBrightnessPercent(int raw) {
 }
 
 bool pointEquals(Point a, Point b) {
-  return a.x == b.x && a.y == b.y;
+  return a.x == b.x &amp;&amp; a.y == b.y;
 }
 
 bool fruitContains(int x, int y) {
   for (int i = 0; i &lt; activeFruitCount; i++) {
-    if (fruits[i].x == x && fruits[i].y == y) return true;
+    if (fruits[i].x == x &amp;&amp; fruits[i].y == y) return true;
   }
   return false;
 }
 
 bool snakeContains(int x, int y) {
   for (int i = 0; i &lt; snakeLen; i++) {
-    if (snake[i].x == x && snake[i].y == y) return true;
+    if (snake[i].x == x &amp;&amp; snake[i].y == y) return true;
   }
   return false;
 }
 
 bool isOpposite(Direction a, Direction b) {
-  return (a == UP && b == DOWN) ||
-         (a == DOWN && b == UP) ||
-         (a == LEFT && b == RIGHT) ||
-         (a == RIGHT && b == LEFT);
+  return (a == UP &amp;&amp; b == DOWN) ||
+         (a == DOWN &amp;&amp; b == UP) ||
+         (a == LEFT &amp;&amp; b == RIGHT) ||
+         (a == RIGHT &amp;&amp; b == LEFT);
 }
 
 void updatePreviewFromPots() {
@@ -562,7 +578,7 @@ void moveSnake() {
   if (newHead.y &gt;= GRID_H) newHead.y = 0;
 
   for (int i = 0; i &lt; snakeLen; i++) {
-    if (snake[i].x == newHead.x && snake[i].y == newHead.y) {
+    if (snake[i].x == newHead.x &amp;&amp; snake[i].y == newHead.y) {
       gameOver = true;
       return;
     }
@@ -655,7 +671,7 @@ void broadcastState() {
   ws.textAll(out);
 }
 
-void handleClientMessage(const String& msg) {
+void handleClientMessage(const String&amp; msg) {
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, msg);
   if (err) return;
@@ -679,7 +695,7 @@ void onWsEvent(AsyncWebSocket *server,
     broadcastState();
   } else if (type == WS_EVT_DATA) {
     AwsFrameInfo *info = (AwsFrameInfo*)arg;
-    if (info-&gt;final && info-&gt;index == 0 && info-&gt;len == len && info-&gt;opcode == WS_TEXT) {
+    if (info-&gt;final &amp;&amp; info-&gt;index == 0 &amp;&amp; info-&gt;len == len &amp;&amp; info-&gt;opcode == WS_TEXT) {
       String msg;
       msg.reserve(len);
       for (size_t i = 0; i &lt; len; i++) {
@@ -704,10 +720,10 @@ void setup() {
   setupEspNow();
 
   ws.onEvent(onWsEvent);
-  server.addHandler(&ws);
+  server.addHandler(&amp;ws);
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/html", INDEX_HTML);
+    request-&gt;send(200, "text/html", INDEX_HTML);
   });
 
   server.begin();
@@ -736,21 +752,21 @@ void loop() {
   }
 
   bool buttonState = digitalRead(BUTTON_PIN);
-  if (lastButtonState == HIGH && buttonState == LOW) {
+  if (lastButtonState == HIGH &amp;&amp; buttonState == LOW) {
     spawnFruitFromPots();
     broadcastState();
     delay(20);
   }
   lastButtonState = buttonState;
 
-  if (!gameOver && activeFruitCount &gt; 0) {
+  if (!gameOver &amp;&amp; activeFruitCount &gt; 0) {
     checkFruitTimeout();
     if (gameOver) {
       broadcastState();
     }
   }
 
-  if (!gameOver && now - lastMoveTime &gt;= MOVE_INTERVAL) {
+  if (!gameOver &amp;&amp; now - lastMoveTime &gt;= MOVE_INTERVAL) {
     lastMoveTime = now;
     moveSnake();
     checkFruitTimeout();   // catches exact timeout edge right after movement too
@@ -826,7 +842,7 @@ void setupEspNow() {
   peerInfo.channel = WIFI_CHANNEL;
   peerInfo.encrypt = false;
 
-  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+  if (esp_now_add_peer(&amp;peerInfo) != ESP_OK) {
     Serial.println("Failed to add peer");
     while (true) delay(1000);
   }
@@ -848,13 +864,13 @@ void setup() {
 void loop() {
   int dir = readDirection();
 
-  if (dir != -1 && dir != lastDir) {
+  if (dir != -1 &amp;&amp; dir != lastDir) {
     ControlPacket pkt;
     pkt.type = 1;
     pkt.direction = dir;
     pkt.seq = seqNum++;
 
-    esp_now_send(broadcastAddress, (uint8_t*)&pkt, sizeof(pkt));
+    esp_now_send(broadcastAddress, (uint8_t*)&amp;pkt, sizeof(pkt));
 
     Serial.print("Sent dir: ");
     Serial.println(dir);
