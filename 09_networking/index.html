@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Networking · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/arduino-light.min.css"
+    />
+    <style>
+      .code-block {
+        background: rgba(255, 250, 246, 0.9);
+        border: 1px solid rgba(255, 138, 50, 0.25);
+        border-radius: 18px;
+        box-shadow: var(--shadow-1);
+        padding: 18px 20px;
+        overflow-x: auto;
+      }
+
+      .code-block pre {
+        margin: 0;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #2b2018;
+      }
+
+      .code-block pre code {
+        background: transparent;
+        padding: 0;
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -44,6 +72,806 @@
         </div>
       </div>
     </section> -->
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>David vs Victor's Snake-Off</h2>
+        </div>
+        <div class="video-embed" data-animate>
+          <iframe
+            src="https://www.youtube.com/embed/7UNMciu4Bqw"
+            title="David vs Victor's Snake-Off"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>The Game Play</h2>
+        </div>
+        <div class="video-embed" data-animate>
+          <iframe
+            src="https://www.youtube.com/embed/NOcdS0J82Og"
+            title="The Game Play"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Circuit</h2>
+        </div>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/Wk9_Circ1.HEIC" alt="Circuit photo 1" />
+          <img src="../assets/Wk9_Circ2.HEIC" alt="Circuit photo 2" />
+          <img src="../assets/Wk9_CircTouch.HEIC" alt="Circuit photo 3" />
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container">
+        <div class="section-title" data-animate>
+          <h2>Code</h2>
+        </div>
+
+        <h3>Controller code</h3>
+        <div class="code-block" data-animate>
+          <pre><code class="language-arduino">#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+#include &lt;AsyncTCP.h&gt;
+#include &lt;ESPAsyncWebServer.h&gt;
+#include &lt;ArduinoJson.h&gt;
+
+// ================= SoftAP =================
+const char* AP_SSID = "SnakeDisplay";
+const char* AP_PASS = "12345678";
+const uint8_t WIFI_CHANNEL = 1;
+
+// ================= Servers =================
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+
+// ================= Pins =================
+const int POT_X_PIN = D0;         // physical pot on D0 -> controls Y
+const int POT_Y_PIN = D1;         // physical pot on D1 -> controls X
+const int BRIGHTNESS_POT_PIN = D2; // new pot on D2 -> opacity / brightness
+const int BUTTON_PIN = D3;        // fruit spawn button
+
+// ================= Game config =================
+const int GRID_W = 20;
+const int GRID_H = 20;
+const int MAX_SNAKE = 225;
+
+const unsigned long MOVE_INTERVAL = 220;
+const unsigned long FRUIT_TIMEOUT = 10000;
+const unsigned long PREVIEW_BROADCAST_INTERVAL = 180;
+
+struct Point {
+  int x;
+  int y;
+};
+
+Point snake[MAX_SNAKE];
+int snakeLen = 3;
+
+Point fruits[2] = {{-1, -1}, {-1, -1}};
+int activeFruitCount = 0;
+unsigned long fruitSpawnTime = 0;
+
+int previewX = 0;
+int previewY = 0;
+unsigned long lastPreviewBroadcast = 0;
+int lastBroadcastPreviewX = -1;
+int lastBroadcastPreviewY = -1;
+int brightnessPercent = 100;
+int lastBroadcastBrightness = -1;
+
+enum Direction {
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT
+};
+
+Direction currentDir = RIGHT;
+Direction nextDir = RIGHT;
+
+bool gameOver = false;
+int score = 0;
+
+unsigned long lastMoveTime = 0;
+bool lastButtonState = HIGH;
+
+// ================= ESP-NOW packet =================
+typedef struct ControlPacket {
+  uint8_t type;      // 1 = direction
+  uint8_t direction; // 0=up,1=down,2=left,3=right
+  uint32_t seq;
+} ControlPacket;
+
+volatile bool hasPendingDir = false;
+volatile uint8_t pendingDir = RIGHT;
+
+// ================= Web page =================
+const char INDEX_HTML[] PROGMEM = R"rawliteral(
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;
+  &lt;title&gt;Snake Game&lt;/title&gt;
+  &lt;style&gt;
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    canvas {
+      background: #222;
+      border: 2px solid #666;
+      margin-top: 10px;
+      width: min(90vw, 500px);
+      height: min(90vw, 500px);
+      image-rendering: pixelated;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    .preview {
+      margin-top: 8px;
+      font-size: 17px;
+      color: #bbb;
+    }
+    button {
+      margin-top: 12px;
+      padding: 10px 16px;
+      font-size: 16px;
+    }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;h2&gt;Snake&lt;/h2&gt;
+  &lt;div&gt;Join Wi-Fi: &lt;b&gt;SnakeDisplay&lt;/b&gt;&lt;/div&gt;
+  &lt;div&gt;Open: &lt;b&gt;http://192.168.4.1&lt;/b&gt;&lt;/div&gt;
+  &lt;canvas id="game" width="500" height="500"&gt;&lt;/canvas&gt;
+  &lt;div class="info" id="info"&gt;Loading...&lt;/div&gt;
+  &lt;div class="preview" id="preview"&gt;Next fruit: X --, Y --&lt;/div&gt;
+  &lt;button onclick="restartGame()"&gt;Restart&lt;/button&gt;
+
+  &lt;script&gt;
+    const GRID_W = 20;
+    const GRID_H = 20;
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const info = document.getElementById("info");
+    const previewText = document.getElementById("preview");
+    const cellW = canvas.width / GRID_W;
+    const cellH = canvas.height / GRID_H;
+
+    let state = null;
+    const ws = new WebSocket(`ws://${location.host}/ws`);
+
+    ws.onmessage = (event) =&gt; {
+      const msg = JSON.parse(event.data);
+      if (msg.type === "state") {
+        state = msg;
+        draw();
+      }
+    };
+
+    function restartGame() {
+      ws.send(JSON.stringify({type: "restart"}));
+    }
+
+    function rgba(r, g, b, a) {
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+
+    function draw() {
+      if (!state) return;
+
+      const alpha = Math.max(0.03, Math.min(1.0, (state.brightnessPercent || 100) / 100));
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // background board
+      ctx.fillStyle = rgba(34, 34, 34, Math.max(0.03, alpha));
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // grid
+      for (let y = 0; y &lt; GRID_H; y++) {
+        for (let x = 0; x &lt; GRID_W; x++) {
+          ctx.strokeStyle = rgba(90, 90, 90, Math.max(0.03, alpha));
+          ctx.strokeRect(x * cellW, y * cellH, cellW, cellH);
+        }
+      }
+
+      // preview placement
+      if (!state.gameOver) {
+        ctx.strokeStyle = state.preview.onSnake || state.preview.onFruit
+          ? rgba(255, 136, 68, Math.max(0.03, alpha))
+          : rgba(102, 170, 255, Math.max(0.03, alpha));
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          state.preview.x * cellW + 4,
+          state.preview.y * cellH + 4,
+          cellW - 8,
+          cellH - 8
+        );
+      }
+
+      // snake
+      for (let i = 0; i &lt; state.snake.length; i++) {
+        const s = state.snake[i];
+        ctx.fillStyle = i === 0
+          ? rgba(0, 255, 136, Math.max(0.03, alpha))
+          : rgba(68, 204, 68, Math.max(0.03, alpha));
+        ctx.fillRect(s[0] * cellW + 2, s[1] * cellH + 2, cellW - 4, cellH - 4);
+      }
+
+      // fruits
+      if (state.fruits) {
+        for (const f of state.fruits) {
+          ctx.fillStyle = rgba(255, 68, 68, Math.max(0.03, alpha));
+          ctx.beginPath();
+          ctx.arc(
+            f.x * cellW + cellW / 2,
+            f.y * cellH + cellH / 2,
+            Math.min(cellW, cellH) / 3,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+      }
+
+      let text = `Score: ${state.score} | Fruits: ${state.activeFruitCount}`;
+      if (state.activeFruitCount &gt; 0 && !state.gameOver) {
+        text += ` | Timer: ${state.timeLeft}s`;
+      }
+      if (state.gameOver) {
+        text += ` | GAME OVER`;
+      }
+      info.textContent = text;
+
+      previewText.textContent =
+        `Next fruit: X ${state.preview.x}, Y ${state.preview.y}` +
+        (state.preview.onSnake ? " (on snake)" : "") +
+        (state.preview.onFruit ? " (on fruit)" : "") +
+        ` | Brightness: ${state.brightnessPercent}%`;
+
+      // large game over overlay
+      if (state.gameOver) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = "rgba(255, 70, 70, 0.98)";
+        ctx.font = "bold 56px Arial";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 18);
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.98)";
+        ctx.font = "bold 22px Arial";
+        ctx.fillText(`Score: ${state.score}`, canvas.width / 2, canvas.height / 2 + 34);
+      }
+    }
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+)rawliteral";
+
+// ================= Helpers =================
+void startSoftAP() {
+  WiFi.mode(WIFI_AP_STA);
+  bool ok = WiFi.softAP(AP_SSID, AP_PASS, WIFI_CHANNEL, 0, 4);
+
+  if (!ok) {
+    Serial.println("SoftAP start failed");
+    while (true) delay(1000);
+  }
+
+  Serial.println("SoftAP started");
+  Serial.print("AP IP: ");
+  Serial.println(WiFi.softAPIP());
+  Serial.print("AP MAC: ");
+  Serial.println(WiFi.softAPmacAddress());
+}
+
+void setupEspNow() {
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW init failed");
+    while (true) delay(1000);
+  }
+
+  esp_now_register_recv_cb([](const esp_now_recv_info_t *recv_info, const uint8_t *incomingData, int len) {
+    if (len != sizeof(ControlPacket)) return;
+
+    ControlPacket pkt;
+    memcpy(&pkt, incomingData, sizeof(pkt));
+
+    if (pkt.type == 1 && pkt.direction <= 3) {
+      pendingDir = pkt.direction;
+      hasPendingDir = true;
+    }
+  });
+
+  Serial.println("ESP-NOW ready");
+}
+
+int readAveraged(int pin, int samples = 4) {
+  long total = 0;
+  for (int i = 0; i &lt; samples; i++) {
+    total += analogRead(pin);
+  }
+  return total / samples;
+}
+
+int mapToGrid(int raw, int gridSize) {
+  int v = (raw * gridSize) / 4096;
+  if (v &lt; 0) v = 0;
+  if (v &gt;= gridSize) v = gridSize - 1;
+  return v;
+}
+
+int mapBrightnessPercent(int raw) {
+  int pct = 3 + ((long)raw * 97) / 4095; // 3% to 100%
+  if (pct &lt; 3) pct = 3;
+  if (pct &gt; 100) pct = 100;
+  return pct;
+}
+
+bool pointEquals(Point a, Point b) {
+  return a.x == b.x && a.y == b.y;
+}
+
+bool fruitContains(int x, int y) {
+  for (int i = 0; i &lt; activeFruitCount; i++) {
+    if (fruits[i].x == x && fruits[i].y == y) return true;
+  }
+  return false;
+}
+
+bool snakeContains(int x, int y) {
+  for (int i = 0; i &lt; snakeLen; i++) {
+    if (snake[i].x == x && snake[i].y == y) return true;
+  }
+  return false;
+}
+
+bool isOpposite(Direction a, Direction b) {
+  return (a == UP && b == DOWN) ||
+         (a == DOWN && b == UP) ||
+         (a == LEFT && b == RIGHT) ||
+         (a == RIGHT && b == LEFT);
+}
+
+void updatePreviewFromPots() {
+  int rawFromD0 = readAveraged(POT_X_PIN);
+  int rawFromD1 = readAveraged(POT_Y_PIN);
+  int rawBrightness = readAveraged(BRIGHTNESS_POT_PIN);
+
+  // swapped intentionally:
+  // D0 controls Y
+  // D1 controls X
+  previewX = mapToGrid(rawFromD1, GRID_W);
+  previewY = mapToGrid(rawFromD0, GRID_H);
+  brightnessPercent = mapBrightnessPercent(rawBrightness);
+}
+
+void resetGame() {
+  snakeLen = 3;
+  snake[0] = {7, 7};
+  snake[1] = {6, 7};
+  snake[2] = {5, 7};
+
+  currentDir = RIGHT;
+  nextDir = RIGHT;
+  pendingDir = RIGHT;
+  hasPendingDir = false;
+
+  fruits[0] = {-1, -1};
+  fruits[1] = {-1, -1};
+  activeFruitCount = 0;
+  fruitSpawnTime = 0;
+
+  score = 0;
+  gameOver = false;
+  lastMoveTime = millis();
+}
+
+void spawnFruitFromPots() {
+  if (gameOver) return;
+
+  updatePreviewFromPots();
+
+  int fx = previewX;
+  int fy = previewY;
+
+  fx = constrain(fx, 0, GRID_W - 1);
+  fy = constrain(fy, 0, GRID_H - 1);
+
+  if (snakeContains(fx, fy)) {
+    Serial.println("Fruit rejected: on snake");
+    return;
+  }
+
+  if (fruitContains(fx, fy)) {
+    Serial.println("Fruit rejected: already a fruit there");
+    return;
+  }
+
+  if (activeFruitCount &gt;= 2) {
+    Serial.println("Fruit rejected: already 2 active fruits");
+    return;
+  }
+
+  fruits[activeFruitCount] = {fx, fy};
+  activeFruitCount++;
+
+  // shared timer resets whenever a new fruit is placed
+  fruitSpawnTime = millis();
+
+  Serial.printf("Fruit spawned at (%d, %d). Active fruits: %d\n", fx, fy, activeFruitCount);
+}
+
+void moveSnake() {
+  if (gameOver) return;
+
+  if (hasPendingDir) {
+    Direction candidate = (Direction)pendingDir;
+    if (!isOpposite(currentDir, candidate)) {
+      nextDir = candidate;
+    }
+    hasPendingDir = false;
+  }
+
+  if (!isOpposite(currentDir, nextDir)) {
+    currentDir = nextDir;
+  }
+
+  Point newHead = snake[0];
+
+  switch (currentDir) {
+    case UP:    newHead.y--; break;
+    case DOWN:  newHead.y++; break;
+    case LEFT:  newHead.x--; break;
+    case RIGHT: newHead.x++; break;
+  }
+
+  if (newHead.x &lt; 0) newHead.x = GRID_W - 1;
+  if (newHead.x &gt;= GRID_W) newHead.x = 0;
+  if (newHead.y &lt; 0) newHead.y = GRID_H - 1;
+  if (newHead.y &gt;= GRID_H) newHead.y = 0;
+
+  for (int i = 0; i &lt; snakeLen; i++) {
+    if (snake[i].x == newHead.x && snake[i].y == newHead.y) {
+      gameOver = true;
+      return;
+    }
+  }
+
+  int eatenIndex = -1;
+  for (int i = 0; i &lt; activeFruitCount; i++) {
+    if (pointEquals(newHead, fruits[i])) {
+      eatenIndex = i;
+      break;
+    }
+  }
+
+  bool ateFruit = (eatenIndex != -1);
+
+  if (ateFruit) {
+    if (snakeLen &lt; MAX_SNAKE) {
+      for (int i = snakeLen; i &gt; 0; i--) {
+        snake[i] = snake[i - 1];
+      }
+      snake[0] = newHead;
+      snakeLen++;
+    }
+
+    for (int i = eatenIndex; i &lt; activeFruitCount - 1; i++) {
+      fruits[i] = fruits[i + 1];
+    }
+    fruits[activeFruitCount - 1] = {-1, -1};
+    activeFruitCount--;
+
+    score++;
+  } else {
+    for (int i = snakeLen - 1; i &gt; 0; i--) {
+      snake[i] = snake[i - 1];
+    }
+    snake[0] = newHead;
+  }
+}
+
+int computeTimeLeftSeconds() {
+  if (activeFruitCount &lt;= 0) return 0;
+
+  long remaining = (long)FRUIT_TIMEOUT - (long)(millis() - fruitSpawnTime);
+  if (remaining &lt;= 0) return 0;
+
+  return (remaining + 999) / 1000;
+}
+
+void checkFruitTimeout() {
+  if (activeFruitCount == 0 || gameOver) return;
+
+  if (computeTimeLeftSeconds() &lt;= 0) {
+    gameOver = true;
+    Serial.println("Game over: fruit timeout");
+  }
+}
+
+void broadcastState() {
+  JsonDocument doc;
+  doc["type"] = "state";
+  doc["score"] = score;
+  doc["gameOver"] = gameOver;
+  doc["activeFruitCount"] = activeFruitCount;
+  doc["brightnessPercent"] = brightnessPercent;
+
+  JsonObject previewObj = doc["preview"].to&lt;JsonObject&gt;();
+  previewObj["x"] = constrain(previewX, 0, GRID_W - 1);
+  previewObj["y"] = constrain(previewY, 0, GRID_H - 1);
+  previewObj["onSnake"] = snakeContains(previewX, previewY);
+  previewObj["onFruit"] = fruitContains(previewX, previewY);
+
+  doc["timeLeft"] = computeTimeLeftSeconds();
+
+  JsonArray fruitsArr = doc["fruits"].to&lt;JsonArray&gt;();
+  for (int i = 0; i &lt; activeFruitCount; i++) {
+    JsonObject f = fruitsArr.add&lt;JsonObject&gt;();
+    f["x"] = fruits[i].x;
+    f["y"] = fruits[i].y;
+  }
+
+  JsonArray snakeArr = doc["snake"].to&lt;JsonArray&gt;();
+  for (int i = 0; i &lt; snakeLen; i++) {
+    JsonArray seg = snakeArr.add&lt;JsonArray&gt;();
+    seg.add(snake[i].x);
+    seg.add(snake[i].y);
+  }
+
+  String out;
+  serializeJson(doc, out);
+  ws.textAll(out);
+}
+
+void handleClientMessage(const String& msg) {
+  JsonDocument doc;
+  DeserializationError err = deserializeJson(doc, msg);
+  if (err) return;
+
+  const char* type = doc["type"];
+  if (!type) return;
+
+  if (strcmp(type, "restart") == 0) {
+    resetGame();
+    broadcastState();
+  }
+}
+
+void onWsEvent(AsyncWebSocket *server,
+               AsyncWebSocketClient *client,
+               AwsEventType type,
+               void *arg,
+               uint8_t *data,
+               size_t len) {
+  if (type == WS_EVT_CONNECT) {
+    broadcastState();
+  } else if (type == WS_EVT_DATA) {
+    AwsFrameInfo *info = (AwsFrameInfo*)arg;
+    if (info-&gt;final && info-&gt;index == 0 && info-&gt;len == len && info-&gt;opcode == WS_TEXT) {
+      String msg;
+      msg.reserve(len);
+      for (size_t i = 0; i &lt; len; i++) {
+        msg += (char)data[i];
+      }
+      handleClientMessage(msg);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  analogReadResolution(12);
+
+  resetGame();
+  updatePreviewFromPots();
+
+  startSoftAP();
+  setupEspNow();
+
+  ws.onEvent(onWsEvent);
+  server.addHandler(&ws);
+
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/html", INDEX_HTML);
+  });
+
+  server.begin();
+
+  Serial.println("Hybrid ESP-NOW + web display ready");
+  Serial.println("Join Wi-Fi: SnakeDisplay");
+  Serial.println("Open: http://192.168.4.1");
+}
+
+void loop() {
+  updatePreviewFromPots();
+
+  unsigned long now = millis();
+
+  if (now - lastPreviewBroadcast &gt;= PREVIEW_BROADCAST_INTERVAL) {
+    lastPreviewBroadcast = now;
+    bool previewChanged = (previewX != lastBroadcastPreviewX || previewY != lastBroadcastPreviewY);
+    bool brightnessChanged = (brightnessPercent != lastBroadcastBrightness);
+
+    if (previewChanged || brightnessChanged) {
+      broadcastState();
+      lastBroadcastPreviewX = previewX;
+      lastBroadcastPreviewY = previewY;
+      lastBroadcastBrightness = brightnessPercent;
+    }
+  }
+
+  bool buttonState = digitalRead(BUTTON_PIN);
+  if (lastButtonState == HIGH && buttonState == LOW) {
+    spawnFruitFromPots();
+    broadcastState();
+    delay(20);
+  }
+  lastButtonState = buttonState;
+
+  if (!gameOver && activeFruitCount &gt; 0) {
+    checkFruitTimeout();
+    if (gameOver) {
+      broadcastState();
+    }
+  }
+
+  if (!gameOver && now - lastMoveTime &gt;= MOVE_INTERVAL) {
+    lastMoveTime = now;
+    moveSnake();
+    checkFruitTimeout();   // catches exact timeout edge right after movement too
+    broadcastState();
+  }
+
+  ws.cleanupClients();
+}</code></pre>
+        </div>
+
+        <h3>Joystick code</h3>
+        <div class="code-block" data-animate>
+          <pre><code class="language-arduino">#include &lt;WiFi.h&gt;
+#include &lt;esp_now.h&gt;
+#include &lt;esp_wifi.h&gt;  // needed for channel setting
+
+// ================= Pins =================
+const int JOY_X_PIN = A0;
+const int JOY_Y_PIN = A1;
+
+// ================= Thresholds =================
+// You may tweak these based on your joystick
+const int LOW_THRESH  = 3000;
+const int HIGH_THRESH = 3900;
+
+// ================= ESP-NOW =================
+const uint8_t WIFI_CHANNEL = 1;  // MUST match master
+
+uint8_t broadcastAddress[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+
+// Packet structure (must match master)
+typedef struct ControlPacket {
+  uint8_t type;      // 1 = direction
+  uint8_t direction; // 0=up,1=down,2=left,3=right
+  uint32_t seq;
+} ControlPacket;
+
+uint32_t seqNum = 0;
+int lastDir = -1;
+
+// ================= Read joystick =================
+int readDirection() {
+  int x = analogRead(JOY_X_PIN);
+  int y = analogRead(JOY_Y_PIN);
+
+  // Debug (optional)
+  //Serial.printf("x=%d y=%d\n", x, y);
+
+  if (y &lt; LOW_THRESH)  return 0; // UP
+  if (y &gt; HIGH_THRESH) return 1; // DOWN
+  if (x &lt; LOW_THRESH)  return 2; // LEFT
+  if (x &gt; HIGH_THRESH) return 3; // RIGHT
+
+  return -1;
+}
+
+// ================= Setup ESP-NOW =================
+void setupEspNow() {
+  WiFi.mode(WIFI_STA);
+
+  // Force channel to match master SoftAP
+  esp_wifi_set_promiscuous(true);
+  esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_promiscuous(false);
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW init failed");
+    while (true) delay(1000);
+  }
+
+  esp_now_peer_info_t peerInfo = {};
+  memcpy(peerInfo.peer_addr, broadcastAddress, 6);
+  peerInfo.channel = WIFI_CHANNEL;
+  peerInfo.encrypt = false;
+
+  if (esp_now_add_peer(&peerInfo) != ESP_OK) {
+    Serial.println("Failed to add peer");
+    while (true) delay(1000);
+  }
+
+  Serial.println("ESP-NOW ready (joystick)");
+}
+
+// ================= Setup =================
+void setup() {
+  Serial.begin(115200);
+  delay(1000);
+
+  analogReadResolution(12);
+
+  setupEspNow();
+}
+
+// ================= Loop =================
+void loop() {
+  int dir = readDirection();
+
+  if (dir != -1 && dir != lastDir) {
+    ControlPacket pkt;
+    pkt.type = 1;
+    pkt.direction = dir;
+    pkt.seq = seqNum++;
+
+    esp_now_send(broadcastAddress, (uint8_t*)&pkt, sizeof(pkt));
+
+    Serial.print("Sent dir: ");
+    Serial.println(dir);
+
+    lastDir = dir;
+  }
+
+  // Reset when joystick returns to neutral
+  if (dir == -1) {
+    lastDir = -1;
+  }
+
+  delay(20);
+}</code></pre>
+        </div>
+      </div>
+    </section>
 
     <footer class="site-footer">
       <div class="container">
