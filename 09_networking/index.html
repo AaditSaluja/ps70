@@ -32,6 +32,23 @@
         padding: 0;
         display: block;
       }
+
+      .collab-tag {
+        margin: 6px 0 0;
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+        color: rgba(42, 27, 18, 0.7);
+      }
+
+      .collab-tag a {
+        color: inherit;
+        text-decoration: none;
+        transition: color 0.5s ease;
+      }
+
+      .collab-tag a:hover {
+        color: var(--orange-500);
+      }
     </style>
   </head>
   <body>
@@ -50,6 +67,12 @@
       <div class="container">
         <p class="eyebrow">Project 09</p>
         <h1>Networking: A 2-player Snake Game Powered by ESP Now</h1>
+        <p class="collab-tag">
+          Made in collaboration with
+          <a href="https://ilstudente.github.io/PS70/index.html" target="_blank" rel="noopener">
+            David Ettel
+          </a>
+        </p>
         <p class="lead">
           We created a 2-player snake game using ESP Now. Here, one of the users controls the positioning of the fruits while the other user controls the snake. Additionally, the food controller also has access to a special power to dim the game board! We used potentiometers to control the dimming and food placement, discretizing the pot output into width, height, and the brightness range.
         </p>
