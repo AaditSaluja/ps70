@@ -82,10 +82,9 @@
 
     <section class="project-content">
       <div class="container">
-        <div class="section-title">
-          <h2>Attaching some static images since STLs don't communicate material and to highlight the internal connectors invisible in the above model. I was happy to make the connection pads work. Also saw some people were successful in embedding fusion viewers into their websites so I might do that in the future too!</h2>
-          <p></p>
-        </div>
+	        <div class="section-title">
+	          <h2>Attaching some static images since STLs don't communicate material and to highlight the internal connectors invisible in the above model. I was happy to make the connection pads work. Also saw some people were successful in embedding fusion viewers into their websites so I might do that in the future too!</h2>
+	        </div>
         <div>
           <img src="../assets/comp.png" alt="Gallery image 1"/>
           <img src="../assets/assm.png" alt="Gallery image 1"/>
@@ -158,7 +157,7 @@
         const container = canvas.closest(".stl-viewer");
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xfff4ea);
+        scene.background = new THREE.Color(0x0b1220);
 
         const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         camera.position.set(0, 0, 120);
