@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>V-Plotter · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <style>
+      .vplotter-video-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 16px;
+        margin: 18px 0 24px;
+      }
+
+      .vplotter-video-row .video-embed {
+        margin: 0;
+        padding-top: 177.78%;
+        border-radius: 14px;
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -24,16 +38,69 @@
         <h1>V-Plotter</h1>
         <p class="lead">
           This machine was made in collaboration with
-          <a href="https://ilstudente.github.io/PS70/index.html">David Ettel</a>
+          <a class="collaborator-link" href="https://ilstudente.github.io/PS70/index.html">David Ettel</a>
           and
-          <a href="https://qiqi0124.github.io/PS70/index.html">Andrew Chen</a>.
+          <a class="collaborator-link" href="https://qiqi0124.github.io/PS70/index.html">Andrew Chen</a>.
+          We made a vertical plotter, building on the setup started by Bobby. 
         </p>
       </div>
     </section>
 
     <section class="project-content">
       <div class="container blog-flow">
-        <h2>First Build</h2>
+        <h2>V-Plotter In Action</h2>
+        <div class="vplotter-video-row" data-animate>
+          <div class="video-embed">
+            <iframe
+              src="https://www.youtube.com/embed/snSHDkLa49s"
+              title="V-Plotter in action 1"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="video-embed">
+            <iframe
+              src="https://www.youtube.com/embed/wLuRyMhaC1c"
+              title="V-Plotter in action 2"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="video-embed">
+            <iframe
+              src="https://www.youtube.com/embed/M3cJ1kTjEgU"
+              title="V-Plotter in action 3"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+          <div class="video-embed">
+            <iframe
+              src="https://www.youtube.com/embed/1BipAi7Mus0"
+              title="V-Plotter in action 4"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </div>
+        </div>
+        <p>As you can see in the video below, the movement is anything but refined. We will discuss the performance and issues and depth below but here is the top level workflow. We draw something on our interface, and the plotter tries to replicate it. The pen ran out of in so sorry about that but you can see the general movement. It does pretty well for lines but struggles to move in closed figures.</p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>The Process</h2>
+        <h3>The Starting Point:</h3>
+        <p>Bobby already had the pulley system designed and assembled when we started. So the first several hours for use were spent tangling and untangling the strings and understanding the system. </p>
+        <p><strong>Constraining the system </strong>: The first real problem we ran into was figuring out how to constrain the system. In its current form, the pulleys and the motor mounts were not constrained with regards to size in any way as visible in picture 1.1 For this, we decided to buy small cylindrical levels things and designed small caps for them to constrain right angles and constant dimensions (see picture 1.2). We made the stupid mistake of not designing the caps for the vertical version so the angles are only impactful horizontally. But this gave us a reliable parallelogram (same size constrained through string size) and we eyeballed the "rectangleness". This was really helpful in callibration.</p>
+        <p><strong>Pen Stand </strong>: We went through 3 iterations of the pen stand (2 of them are visible in 2.2 and 2.5). The latter did not work because here in the writing position, the pen was in the air held by a servo motor. The servo unfortunately was not strong enough to stop the pen from just vibrating a lot. This is visible in some of the more jagged lines on the wall. We swapped it out for the system in 2.2 because that way the pen rests on the stand while writing, giving more support. Further, it is connected by a ring that uses M2 and M3 screws to connect to the servo and the pen. Definitely does hurt the pen lol but it is solid and easy to swap!</p>
+        <p><strong>Friction and Counter Balancing</strong>: The pen stand was very slow in adjusting to slack in the system when the bottom motor released string. This was because of friction with the string in the free moving loop at the top. Further, the system struggled to go to the bottom due to the considerable weight on the edges. To counter these, we did 2 things respectively. We did 2 things to counter this, first we added extra weight to the pen stand making it easier for the pen to move down. For upwards movement, we redesigned the loop on the pen stand to be more circular, to reduce friction. This is visible in 2.4. These steps generally made the motion much smoother.</p>
+        <p><strong>Wires and more Wires</strong>: Functioning out of a breadboard for the longest time, we gave up on Kassia's great advice at 6am on the day of presentations. What followed was some very sleepy soldering but it worked! Didn't have to worry about wires once after that so that was great. The sleep deprivation did lead to some shabby solders though.</p>
+
         <div class="simple-gallery" data-animate>
           <img src="../assets/V1.jpg" alt="V-Plotter first build photo 1" />
           <img src="../assets/V2.jpg" alt="V-Plotter first build photo 2" />
@@ -46,12 +113,7 @@
           <img src="../assets/V9.jpg" alt="V-Plotter first build photo 9" />
           <img src="../assets/V10.jpg" alt="V-Plotter first build photo 10" />
         </div>
-      </div>
-    </section>
-
-    <section class="project-content">
-      <div class="container blog-flow">
-        <h2>Second Build</h2>
+        <h2>Components Build</h2>
         <div class="simple-gallery" data-animate>
           <img src="../assets/2V1.jpg" alt="V-Plotter second build photo 1" />
           <img src="../assets/2V2.jpg" alt="V-Plotter second build photo 2" />
@@ -59,6 +121,24 @@
           <img src="../assets/2V4.jpg" alt="V-Plotter second build photo 4" />
           <img src="../assets/2V5.jpg" alt="V-Plotter second build photo 5" />
         </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>The Physics and Software Framework</h2>
+        <p>We built out a simple draw here, convert to x,y setup for out drawin process. It is visible in the videos above. We added plenty of debugging systems including a set/move to home to make out lives easier. This interacts by directly communicating with the board using the laptop ports, we appreciated the convenience of this.</p>
+        <p>For the mapping from x,y coordinates to this space, We first realized the each stepper motor eseentially has its own circular (or more like a segment of a circle) area that it can move to. So essentially, we need to make these 2 radial movements into euclidian space. Since the distance between them is constrained this was pretty simple. Outside of dimension, the only real factor we had to tune was the mapping between steps and distance covered. Further, because of this physics, our system was <strong>auto balancing and homing</strong>. When disconnected, it would make into the same middle of center space which was great.</p>
+        <p>Limit Switches: We planned to add limit switches but did not because we wanted to focus on tuning the system. We weren't confident on what we wanted our starting point to be. This took enough time that we never really got here. Also because this was a lower priority given a nature of our system. We had a huge canvas size and we were only using a portion of it at once. With the move and set/move home features in our interface, it was pretty easy to get the system back in place. Plus auto-home on turning the system off was also a neat benefit.</p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Issues with the current system</h2>
+        <p>The physics of the current system are quite complicated for multiple reasons. The upper rope can not glide tensionlessly which means that the marker module is usually not in the required equilibrium state necessary for smooth operations. Furthermore, minor imbalances in the system can release the tension on one of the threads connecting the motors with the marker module. But tension is necessary for the motor step based coordinate system. Finally, the forces applied on the marker module by the two outside weights are in a nontrivial relationshipp. with the marker's position on the canvas.</p>
+      <p>A better alternative would have been a classical V-plotter where the motors are both attached on top of the canvas and the marker module is only attached to these two motors and no additional weights. The reason why this is easier is that the equilibirum position is actuallly achieved reliably and none of the nontrivial additional forces come into play. Gravity guarantees that both threads connecting the marker module to the motors are always in full tension and that Pythagoras is the only thing we need to calculate the marker's position.</p>
+      <p>The reason why Bobby had developed the system in its current configuration is that he wanted to develop a super fast wall plotter with four motors, one in each corner. The current state was just supposed to be a step on the road to the four motor system which comes with additional challenges due to its inherent overconstrainment (three thread lengths arlready determine a position uniquely, thus the forth one has to be exactly of a specific length). Bobby became frustrated by this challenge and (naturally, given his exorbital competence superiority) so are we.</p>
       </div>
     </section>
 
@@ -88,6 +168,58 @@
 
     <script src="../script.js"></script>
     <script>
+      const lightbox = document.createElement("div");
+      lightbox.className = "gallery-lightbox";
+      lightbox.innerHTML = `
+        <button class="gallery-lightbox-close" type="button" aria-label="Close expanded image">&times;</button>
+        <img alt="" />
+        <p></p>
+      `;
+      document.body.appendChild(lightbox);
+
+      const lightboxImage = lightbox.querySelector("img");
+      const lightboxCaption = lightbox.querySelector("p");
+
+      function closeLightbox() {
+        lightbox.classList.remove("is-open");
+        lightboxImage.removeAttribute("src");
+        lightboxImage.alt = "";
+        lightboxCaption.textContent = "";
+      }
+
+      document.querySelectorAll(".simple-gallery").forEach((gallery, galleryIndex) => {
+        gallery.querySelectorAll("img").forEach((image, index) => {
+          const item = document.createElement("button");
+          item.className = "gallery-item";
+          item.type = "button";
+          item.setAttribute("aria-label", `Expand ${image.alt}`);
+          image.parentNode.insertBefore(item, image);
+          item.appendChild(image);
+
+          const number = document.createElement("span");
+          number.className = "gallery-number";
+          number.textContent = `${galleryIndex + 1}.${index + 1}`;
+          item.appendChild(number);
+
+          item.addEventListener("click", () => {
+            lightboxImage.src = image.src;
+            lightboxImage.alt = image.alt;
+            lightboxCaption.textContent = image.alt;
+            lightbox.classList.add("is-open");
+          });
+        });
+      });
+
+      lightbox.addEventListener("click", (event) => {
+        if (event.target === lightbox || event.target.classList.contains("gallery-lightbox-close")) {
+          closeLightbox();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeLightbox();
+      });
+
       document.querySelectorAll("[data-code-src]").forEach(async (codeBlock) => {
         try {
           const response = await fetch(codeBlock.dataset.codeSrc);
