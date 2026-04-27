@@ -388,6 +388,30 @@ a {
   display: block;
 }
 
+.code-details {
+  margin: 16px 0;
+  border: 1px solid rgba(146, 186, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(16, 29, 51, 0.58);
+  overflow: hidden;
+}
+
+.code-details summary {
+  cursor: pointer;
+  padding: 16px 20px;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.code-details .code-block {
+  margin: 0;
+  border-width: 1px 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  max-height: 560px;
+}
+
 .video-embed {
   position: relative;
   width: 100%;

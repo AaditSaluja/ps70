@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>V-Plotter Studio Pro v2.0</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        #controls, #calibration {
+            margin: 10px;
+            padding: 15px;
+            background: #333;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        #calibration {
+            background: #2a2a2a;
+            border: 1px solid #444;
+        }
+        .section-label {
+            width: 100%;
+            text-align: center;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        #canvas-container {
+            padding: 20px;
+            background: #222;
+            border-radius: 8px;
+            margin: 10px;
+            border: 1px solid #444;
+        }
+        canvas {
+            background: white;
+            cursor: crosshair;
+            touch-action: none;
+            border: 1px solid #000;
+            display: block;
+        }
+        button {
+            padding: 10px 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            background: #444;
+            color: white;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover { background: #555; }
+        button.active { background: #007bff; }
+        #serialBtn { background: #ff8800; }
+        #runBtn { background: #28a745; }
+        .nudge-btn { background: #555; min-width: 45px; }
+        .danger-btn { background: #dc3545; }
+        .test-btn { background: #7952b3; }
+        #output {
+            width: 600px;
+            height: 120px;
+            margin-top: 10px;
+            background: #000;
+            color: #0f0;
+            border: none;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+        #version {
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: -10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>V-Plotter Studio Pro</h2>
+    <div id="version">UI v2.0 — normalized coordinates (firmware controls canvas size)</div>
+
+    <div id="controls">
+        <div class="section-label">Drawing Tools</div>
+        <button onclick="setTool('pen')" id="penBtn" class="active">Freehand</button>
+        <button onclick="setTool('line')" id="lineBtn">Line</button>
+        <button onclick="setTool('rect')" id="rectBtn">Rectangle</button>
+        <button onclick="setTool('circle')" id="circleBtn">Circle</button>
+        <button onclick="clearCanvas()" class="danger-btn">Clear Canvas</button>
+        <div style="border-left: 1px solid #555; margin: 0 10px;"></div>
+        <button id="serialBtn" onclick="connectSerial()">1. Connect ESP32</button>
+        <button id="runBtn" onclick="streamToMachine()">2. Run Drawing</button>
+    </div>
+
+    <div id="calibration">
+        <div class="section-label">Machine Calibration (absolute mm)</div>
+        <button class="nudge-btn" onclick="sendCalibration('MOVE_REL -5 0')">←</button>
+        <button class="nudge-btn" onclick="sendCalibration('MOVE_REL 0 -5')">↑</button>
+        <button class="nudge-btn" onclick="sendCalibration('MOVE_REL 0 5')">↓</button>
+        <button class="nudge-btn" onclick="sendCalibration('MOVE_REL 5 0')">→</button>
+        <div style="border-left: 1px solid #555; margin: 0 10px;"></div>
+        <button onclick="sendCalibration('GOTO_HOME')" style="background: #00bcd4;">Move to Home (0,0)</button>
+        <button onclick="sendCalibration('SET_HOME')" style="background: #6f42c1;">Set (0,0) Here</button>
+        <button onclick="sendCalibration('TEST_SQUARE')" style="background: #17a2b8;">Test 100mm Square</button>
+        <button onclick="sendCalibration('CHECK_COORDINATES')" class="test-btn">Check Coordinates</button>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="plotCanvas"></canvas>
+    </div>
+
+    <textarea id="output" readonly placeholder="System Logs..."></textarea>
+
+    <script>
+        // === HTML CANVAS DISPLAY ONLY ===
+        // The actual physical canvas size is set in the firmware.
+        // The HTML just sends normalized coordinates (0..1) for MOVE commands.
+        const DISPLAY_WIDTH_PX  = 600;
+        const DISPLAY_HEIGHT_PX = 600;
+
+        const canvas = document.getElementById('plotCanvas');
+        const ctx = canvas.getContext('2d');
+        const output = document.getElementById('output');
+
+        canvas.width = DISPLAY_WIDTH_PX;
+        canvas.height = DISPLAY_HEIGHT_PX;
+
+        let drawing = false;
+        let tool = 'pen';
+        let currentPath = [];
+        let allPaths = [];
+        let port, writer;
+
+        function setTool(t) {
+            tool = t;
+            document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+            document.getElementById(t + 'Btn').classList.add('active');
+        }
+
+        // Returns coordinates in pixels for drawing AND normalized 0..1 for streaming
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            let pixelX = e.clientX - rect.left;
+            let pixelY = e.clientY - rect.top;
+
+            pixelX = Math.max(0, Math.min(canvas.width, pixelX));
+            pixelY = Math.max(0, Math.min(canvas.height, pixelY));
+
+            return {
+                pixelX: pixelX,
+                pixelY: pixelY,
+                normX: pixelX / canvas.width,   // 0..1
+                normY: pixelY / canvas.height   // 0..1
+            };
+        }
+
+        canvas.onmousedown = (e) => {
+            drawing = true;
+            currentPath = [getCoords(e)];
+        };
+
+        canvas.onmousemove = (e) => {
+            if (!drawing) return;
+            const p = getCoords(e);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            drawAllStoredPaths();
+
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = "#007bff";
+
+            if (tool === 'pen') {
+                currentPath.push(p);
+                drawPath(currentPath);
+            } else if (tool === 'line') {
+                drawLine(currentPath[0], p);
+            } else if (tool === 'rect') {
+                drawRect(currentPath[0], p);
+            } else if (tool === 'circle') {
+                drawCircle(currentPath[0], p);
+            }
+
+            ctx.setLineDash([]);
+        };
+
+        window.onmouseup = (e) => {
+            if (!drawing) return;
+            drawing = false;
+            allPaths.push({ tool, points: [...currentPath, getCoords(e)] });
+            drawAllStoredPaths();
+        };
+
+        function drawGrid() {
+            ctx.strokeStyle = "#eee";
+            ctx.lineWidth = 1;
+
+            // 8 vertical and 8 horizontal grid lines (visual reference only)
+            const gridDivisions = 8;
+            for (let i = 0; i <= gridDivisions; i++) {
+                const x = (i / gridDivisions) * canvas.width;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+
+                const y = (i / gridDivisions) * canvas.height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawPath(pts) {
+            if (!pts.length) return;
+            ctx.beginPath();
+            ctx.moveTo(pts[0].pixelX, pts[0].pixelY);
+            pts.forEach(p => ctx.lineTo(p.pixelX, p.pixelY));
+            ctx.stroke();
+        }
+
+        function drawLine(p1, p2) {
+            ctx.beginPath();
+            ctx.moveTo(p1.pixelX, p1.pixelY);
+            ctx.lineTo(p2.pixelX, p2.pixelY);
+            ctx.stroke();
+        }
+
+        function drawRect(p1, p2) {
+            ctx.strokeRect(
+                p1.pixelX,
+                p1.pixelY,
+                p2.pixelX - p1.pixelX,
+                p2.pixelY - p1.pixelY
+            );
+        }
+
+        function drawCircle(p1, p2) {
+            let r = Math.sqrt(
+                Math.pow(p2.pixelX - p1.pixelX, 2) +
+                Math.pow(p2.pixelY - p1.pixelY, 2)
+            );
+            ctx.beginPath();
+            ctx.arc(p1.pixelX, p1.pixelY, r, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.fillRect(p1.pixelX - 2, p1.pixelY - 2, 4, 4);
+        }
+
+        function drawAllStoredPaths() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+
+            ctx.strokeStyle = "black";
+            ctx.lineWidth = 2;
+
+            allPaths.forEach(path => {
+                if (path.tool === 'pen') drawPath(path.points);
+                if (path.tool === 'line') drawLine(path.points[0], path.points[1]);
+                if (path.tool === 'rect') drawRect(path.points[0], path.points[1]);
+                if (path.tool === 'circle') drawCircle(path.points[0], path.points[1]);
+            });
+        }
+
+        function clearCanvas() {
+            allPaths = [];
+            drawAllStoredPaths();
+        }
+
+        async function connectSerial() {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                writer = port.writable.getWriter();
+                log("Connected to ESP32");
+            } catch (e) {
+                log("Error: " + e);
+            }
+        }
+
+        async function sendCalibration(cmd) {
+            if (!writer) return alert("Connect ESP32 first!");
+            await sendLine(cmd);
+            log("Sent: " + cmd);
+        }
+
+        // Send a normalized MOVE command (values 0..1 — firmware scales to actual mm)
+        async function sendMoveNorm(normX, normY) {
+            await sendLine(`MOVE ${normX.toFixed(4)} ${normY.toFixed(4)}`);
+        }
+
+        async function streamToMachine() {
+            if (!writer) return alert("Connect ESP32 first!");
+
+            log("Streaming drawing data (normalized 0..1)...");
+
+            for (const path of allPaths) {
+                const pStart = path.points[0];
+
+                if (path.tool === 'circle') {
+                    const p1 = path.points[0];
+                    const p2 = path.points[1];
+
+                    // Radius in normalized units (assumes square aspect ratio)
+                    let radiusNorm = Math.sqrt(
+                        Math.pow(p2.normX - p1.normX, 2) +
+                        Math.pow(p2.normY - p1.normY, 2)
+                    );
+
+                    await sendLine("PEN 0");
+                    await sendMoveNorm(p1.normX + radiusNorm, p1.normY);
+                    await sendLine("PEN 1");
+
+                    const segments = 40;
+                    for (let i = 0; i <= segments; i++) {
+                        let angle = (i / segments) * 2 * Math.PI;
+                        let x = p1.normX + radiusNorm * Math.cos(angle);
+                        let y = p1.normY + radiusNorm * Math.sin(angle);
+                        await sendMoveNorm(x, y);
+                    }
+
+                    await sendLine("PEN 0");
+                } else {
+                    await sendLine("PEN 0");
+                    await sendMoveNorm(pStart.normX, pStart.normY);
+                    await sendLine("PEN 1");
+
+                    if (path.tool === 'rect') {
+                        const [p1, p2] = path.points;
+                        await sendMoveNorm(p2.normX, p1.normY);
+                        await sendMoveNorm(p2.normX, p2.normY);
+                        await sendMoveNorm(p1.normX, p2.normY);
+                        await sendMoveNorm(p1.normX, p1.normY);
+                    } else {
+                        for (const p of path.points) {
+                            await sendMoveNorm(p.normX, p.normY);
+                        }
+                    }
+                }
+            }
+
+            await sendLine("PEN 0");
+            log("Drawing Complete!");
+        }
+
+        async function sendLine(text) {
+            const encoder = new TextEncoder();
+            await writer.write(encoder.encode(text + "\n"));
+            await new Promise(r => setTimeout(r, 80));
+        }
+
+        function log(msg) {
+            output.value += `> ${msg}\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        drawAllStoredPaths();
+    </script>
+</body>
+</html>

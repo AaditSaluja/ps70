@@ -1,0 +1,314 @@
+// =============================================================
+//  V-Plotter Firmware v2.0
+//  - Accepts normalized 0..1 coordinates from HTML UI v2.0
+//  - Canvas physical size is configured ONLY here
+//  - Bottom-motor geometry with counterweight pulleys at top
+// =============================================================
+
+#include <AccelStepper.h>
+#include <ESP32Servo.h>
+
+// --- TUNABLE PHYSICAL CONSTANTS ---
+// Horizontal distance between the two bottom motors
+float MOTOR_DISTANCE_MM = 620.0;
+
+// Steps per mm of thread
+float STEPS_PER_MM = 23.8095;
+
+// Vertical distance from motors up to the TOP edge of the canvas
+float MOTOR_TO_TOP_OF_CANVAS_MM = 880.0;
+
+// Vertical distance from motors up to the BOTTOM edge of the canvas
+float MOTOR_TO_BOTTOM_OF_CANVAS_MM = 200.0;
+
+// === PHYSICAL CANVAS SIZE — single source of truth ===
+// Change these without touching the HTML
+const float CANVAS_WIDTH_MM  = 200.0;
+const float CANVAS_HEIGHT_MM = 200.0;
+
+// --- PIN DEFINITIONS ---
+const int STEP_A = D3;
+const int DIR_A  = D2;
+const int STEP_B = D5;
+const int DIR_B  = D4;
+const int SERVO_PIN = D0;
+
+// --- SERVO SETTINGS ---
+const int PEN_UP_ANGLE = 30;
+const int PEN_DOWN_ANGLE = 0;
+
+// --- CHECK COORDINATES TEST SETTINGS ---
+const long CHECK_COORD_STEPS = 2000;
+const float CHECK_COORD_SPEED = 400.0;
+const float CHECK_COORD_ACCEL = 250.0;
+
+// --- GLOBAL STATE ---
+AccelStepper stepperL(AccelStepper::DRIVER, STEP_A, DIR_A);
+AccelStepper stepperR(AccelStepper::DRIVER, STEP_B, DIR_B);
+Servo penServo;
+
+float currentX = 0.0;   // centered machine coordinates (mm): left negative, right positive
+float currentY = 0.0;   // 0 = top of canvas (HTML convention), positive downward (mm)
+float currentL1 = 0.0;  // current left thread length (motor to gondola, mm)
+float currentL2 = 0.0;  // current right thread length (motor to gondola, mm)
+
+// FIX: Added absolute thread lengths at home
+float homeL1 = 0.0;     // Absolute left thread length at home
+float homeL2 = 0.0;     // Absolute right thread length at home
+
+// ---------------- HELPERS ----------------
+void runBothUntilDone() {
+  while (stepperL.distanceToGo() != 0 || stepperR.distanceToGo() != 0) {
+    stepperL.run();
+    stepperR.run();
+  }
+}
+
+// Compute thread lengths for a given (x, y) in canvas-mm convention
+// (x centered: -CANVAS_WIDTH_MM/2 .. +CANVAS_WIDTH_MM/2)
+// (y: 0 at top of canvas, increases downward)
+void computeThreadLengths(float x, float y, float &outL1, float &outL2) {
+  float halfSpan = MOTOR_DISTANCE_MM / 2.0;
+
+  // Vertical distance from motor level UP to the gondola.
+  // y=0 -> top of canvas (gondola high, far from motors) -> longest thread
+  // y=CANVAS_HEIGHT_MM -> bottom of canvas (close to motors) -> shortest thread
+  float penYFromMotor = MOTOR_TO_BOTTOM_OF_CANVAS_MM + (CANVAS_HEIGHT_MM - y);
+
+  outL1 = sqrt(sq(x + halfSpan) + sq(penYFromMotor));
+  outL2 = sqrt(sq(halfSpan - x) + sq(penYFromMotor));
+}
+
+void resetHomeGeometry() {
+  // Home is top-center of canvas: x=0 (centered), y=0 (top)
+  currentX = 0.0;
+  currentY = 0.0;
+
+  computeThreadLengths(currentX, currentY, currentL1, currentL2);
+  
+  // FIX: Save the absolute thread lengths at the home position
+  homeL1 = currentL1;
+  homeL2 = currentL2;
+
+  stepperL.setCurrentPosition(0);
+  stepperR.setCurrentPosition(0);
+}
+
+void checkCoordinates() {
+  Serial.println("CHECK_COORDINATES_START");
+
+  float oldMaxSpeedL = stepperL.maxSpeed();
+  float oldMaxSpeedR = stepperR.maxSpeed();
+
+  stepperL.setMaxSpeed(CHECK_COORD_SPEED);
+  stepperL.setAcceleration(CHECK_COORD_ACCEL);
+  stepperR.setMaxSpeed(CHECK_COORD_SPEED);
+  stepperR.setAcceleration(CHECK_COORD_ACCEL);
+
+  // Note: checkCoordinates is relative for testing motors, so move() is fine here
+  stepperL.move(CHECK_COORD_STEPS);
+  stepperR.move(CHECK_COORD_STEPS);
+  runBothUntilDone();
+
+  delay(500);
+
+  stepperL.move(-CHECK_COORD_STEPS);
+  stepperR.move(-CHECK_COORD_STEPS);
+  runBothUntilDone();
+
+  delay(300);
+
+  stepperL.setMaxSpeed(oldMaxSpeedL);
+  stepperL.setAcceleration(1000);
+  stepperR.setMaxSpeed(oldMaxSpeedR);
+  stepperR.setAcceleration(1000);
+
+  Serial.println("CHECK_COORDINATES_DONE");
+}
+
+void togglePen(bool down) {
+  penServo.write(down ? PEN_DOWN_ANGLE : PEN_UP_ANGLE);
+  delay(350);
+}
+
+// ---------------- MOTION ----------------
+void moveToCartesian(float x, float y) {
+  // Soft bounds (centered x, top-down y)
+  if (x < -(CANVAS_WIDTH_MM / 2.0)) x = -(CANVAS_WIDTH_MM / 2.0);
+  if (x >  (CANVAS_WIDTH_MM / 2.0)) x =  (CANVAS_WIDTH_MM / 2.0);
+  if (y < 0.0) y = 0.0;
+  if (y > CANVAS_HEIGHT_MM) y = CANVAS_HEIGHT_MM;
+
+  float nextL1, nextL2;
+  computeThreadLengths(x, y, nextL1, nextL2);
+
+  // FIX: Use absolute steps from home to prevent rounding accumulation errors
+  long targetStepsL = lround((nextL1 - homeL1) * STEPS_PER_MM);
+  long targetStepsR = lround((nextL2 - homeL2) * STEPS_PER_MM);
+
+  stepperL.moveTo(targetStepsL); // Using moveTo() instead of move()
+  stepperR.moveTo(targetStepsR);
+
+  runBothUntilDone();
+
+  currentX = x;
+  currentY = y;
+  currentL1 = nextL1;
+  currentL2 = nextL2;
+
+  Serial.print("MOVED_TO x=");
+  Serial.print(currentX);
+  Serial.print(" y=");
+  Serial.print(currentY);
+  Serial.print(" | L1=");
+  Serial.print(currentL1);
+  Serial.print(" L2=");
+  Serial.print(currentL2);
+  Serial.print(" | targetStepsL=");
+  Serial.print(targetStepsL);
+  Serial.print(" targetStepsR=");
+  Serial.println(targetStepsR);
+}
+
+// ---------------- COMMANDS ----------------
+void processCommand(String cmd) {
+  cmd.trim();
+  cmd.toUpperCase();
+
+  if (cmd.startsWith("MOVE ")) {
+    // === V2 PROTOCOL: normalized coordinates 0..1 ===
+    int firstSpace = cmd.indexOf(' ');
+    int lastSpace = cmd.lastIndexOf(' ');
+
+    float normX = cmd.substring(firstSpace + 1, lastSpace).toFloat();
+    float normY = cmd.substring(lastSpace + 1).toFloat();
+
+    // Scale normalized 0..1 to actual canvas mm (top-left origin)
+    float uiX = normX * CANVAS_WIDTH_MM;
+    float uiY = normY * CANVAS_HEIGHT_MM;
+
+    // Convert canvas x to centered machine x
+    float tx = uiX - (CANVAS_WIDTH_MM / 2.0);
+    float ty = uiY;
+
+    moveToCartesian(tx, ty);
+  }
+  else if (cmd.startsWith("MOVE_REL ")) {
+    // MOVE_REL stays in absolute mm (used by calibration nudge buttons)
+    int firstSpace = cmd.indexOf(' ');
+    int lastSpace = cmd.lastIndexOf(' ');
+
+    float dx = cmd.substring(firstSpace + 1, lastSpace).toFloat();
+    float dy = cmd.substring(lastSpace + 1).toFloat();
+
+    moveToCartesian(currentX + dx, currentY + dy);
+  }
+  else if (cmd == "SET_HOME") {
+    resetHomeGeometry();
+    Serial.println("HOME_SET");
+  }
+  else if (cmd == "GOTO_HOME") {
+    togglePen(false);
+    moveToCartesian(0.0, 0.0);
+  }
+  else if (cmd == "CHECK_COORDINATES") {
+    checkCoordinates();
+  }
+  else if (cmd == "PEN 1") {
+    togglePen(true);
+    Serial.println("PEN_DOWN");
+  }
+  else if (cmd == "PEN 0") {
+    togglePen(false);
+    Serial.println("PEN_UP");
+  }
+  else if (cmd == "TEST_SQUARE") {
+    // Draws a 100mm x 100mm square centered horizontally at the top of canvas
+    togglePen(false);
+    moveToCartesian(-50.0, 0.0);
+    togglePen(true);
+    moveToCartesian(50.0, 0.0);
+    moveToCartesian(50.0, 100.0);
+    moveToCartesian(-50.0, 100.0);
+    moveToCartesian(-50.0, 0.0);
+    togglePen(false);
+    Serial.println("TEST_SQUARE_DONE");
+  }
+  else if (cmd.startsWith("MOTOR_L ")) {
+    float mm = cmd.substring(8).toFloat();
+    long steps = lround(mm * STEPS_PER_MM);
+    
+    stepperL.move(steps);
+    runBothUntilDone();
+    
+    // IMPORTANT: Adjust the 'Home' reference point mathematically.
+    // This prevents the plotter from "snapping back" to the old string length
+    // the next time it receives a Cartesian (X,Y) move command.
+    homeL1 -= mm;
+    currentL1 += mm;
+    
+    Serial.print("LEFT_STRING_ADJUSTED mm=");
+    Serial.println(mm);
+  }
+  else if (cmd.startsWith("MOTOR_R ")) {
+    float mm = cmd.substring(8).toFloat();
+    long steps = lround(mm * STEPS_PER_MM);
+    
+    stepperR.move(steps);
+    runBothUntilDone();
+    
+    // IMPORTANT: Adjust the 'Home' reference point mathematically.
+    homeL2 -= mm;
+    currentL2 += mm;
+    
+    Serial.print("RIGHT_STRING_ADJUSTED mm=");
+    Serial.println(mm);
+  }
+  else {
+    Serial.print("UNKNOWN_CMD: ");
+    Serial.println(cmd);
+  }
+}
+
+// ---------------- SETUP / LOOP ----------------
+void setup() {
+  Serial.begin(115200);
+
+  // If a motor moves the wrong direction, flip its bool here
+  stepperL.setPinsInverted(false, false, false);
+  stepperR.setPinsInverted(false, false, false);
+
+  stepperL.setMaxSpeed(2000);
+  stepperL.setAcceleration(1000);
+  stepperR.setMaxSpeed(2000);
+  stepperR.setAcceleration(1000);
+
+  ESP32PWM::allocateTimer(0);
+  penServo.setPeriodHertz(50);
+  penServo.attach(SERVO_PIN, 500, 2400);
+
+  togglePen(false);
+  resetHomeGeometry();
+
+  Serial.println("==========================================");
+  Serial.println("V-Plotter Firmware v2.0");
+  Serial.println("Protocol: MOVE normX normY (0..1 normalized)");
+  Serial.println("Bottom-motor geometry with top counterweights");
+  Serial.print("Canvas size: ");
+  Serial.print(CANVAS_WIDTH_MM);
+  Serial.print(" x ");
+  Serial.print(CANVAS_HEIGHT_MM);
+  Serial.println(" mm");
+  Serial.println("Home = top-center of canvas");
+  Serial.println("==========================================");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String line = Serial.readStringUntil('\n');
+    line.trim();
+    if (line.length() > 0) {
+      processCommand(line);
+    }
+  }
+}
