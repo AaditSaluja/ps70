@@ -5,6 +5,144 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Final Project · PS70</title>
     <link rel="stylesheet" href="../styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <style>
+      .final-video-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin: 18px 0 24px;
+      }
+
+      .final-video-row .video-embed {
+        margin: 0;
+        padding-top: 177.78%;
+        border-radius: 14px;
+      }
+
+      .final-video-row .video-embed video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        object-fit: cover;
+      }
+
+      .stl-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+      }
+
+      .stl-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(146, 186, 255, 0.14);
+        border-radius: 18px;
+        background: rgba(16, 29, 51, 0.7);
+        box-shadow: var(--shadow-1);
+      }
+
+      .stl-card canvas {
+        width: 100%;
+        min-height: 260px;
+        display: block;
+      }
+
+      .stl-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-top: 1px solid rgba(146, 186, 255, 0.14);
+      }
+
+      .stl-card-footer p {
+        margin: 0;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .stl-expand {
+        border: 1px solid rgba(234, 241, 255, 0.22);
+        border-radius: 999px;
+        background: rgba(7, 11, 19, 0.46);
+        color: var(--ink);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 8px 12px;
+      }
+
+      .stl-lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 101;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        background: rgba(7, 11, 19, 0.9);
+        backdrop-filter: blur(10px);
+      }
+
+      .stl-lightbox.is-open {
+        display: flex;
+      }
+
+      .stl-lightbox-panel {
+        width: min(92vw, 1100px);
+        background: rgba(16, 29, 51, 0.92);
+        border: 1px solid rgba(146, 186, 255, 0.18);
+        border-radius: 22px;
+        box-shadow: var(--shadow-2);
+        overflow: hidden;
+      }
+
+      .stl-lightbox canvas {
+        width: 100%;
+        min-height: min(72vh, 680px);
+        display: block;
+      }
+
+      .stl-lightbox-caption {
+        margin: 0;
+        padding: 14px 18px;
+        color: var(--muted);
+        border-top: 1px solid rgba(146, 186, 255, 0.14);
+      }
+
+      .stl-lightbox-close {
+        position: absolute;
+        top: 18px;
+        right: 22px;
+        width: 44px;
+        height: 44px;
+        border: 1px solid rgba(234, 241, 255, 0.28);
+        border-radius: 999px;
+        background: rgba(16, 29, 51, 0.78);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      @media (max-width: 620px) {
+        .final-video-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
   </head>
   <body>
     <header class="site-header">
@@ -21,29 +159,158 @@
     <section class="project-hero">
       <div class="container">
         <p class="eyebrow">Project 13</p>
-        <h1>Final Project</h1>
+        <h1>My RC (Car?)</h1>
         <p class="lead">
           <!-- Capture the capstone concept, final build, and presentation story. -->
+           Here's the culmination of my semester's work. After like 5 sunrises seen in a row from the PS70 lab, I am moderately happy and proud of the result. This "car" doesn't move but getting it to this point was a fun process!
         </p>
       </div>
     </section>
 
-    <!-- <section class="project-content">
-      <div class="container info-grid">
-        <div class="info-card" data-animate>
-          <h3>Vision</h3>
-          <p>Describe the final concept and the problem it solves.</p>
-        </div>
-        <div class="info-card" data-animate>
-          <h3>Build</h3>
-          <p>Break down fabrication, electronics, and code stacks.</p>
-        </div>
-        <div class="info-card" data-animate>
-          <h3>Showcase</h3>
-          <p>Embed final photos, videos, or demo links.</p>
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Project Updates</h2>
+        <p>
+          This final iteration majorly involved the following updates:
+          <ul>
+            <li> A new gearbox supporting 4 gear speeds. Gear ratios being 0.33, 0.56, 1, and 1.67. To accomate this, the gears were redesigned to be much smaller as seen in image 1.5.</li>
+            <li> A new gearbox design that brings everything together in a compact form with minimal hot glue and a completely open view of the gears. I moved the servos to be press fit right under the axels and dropped the acryclic for a completely open setup.</li>
+            <li> A ESP-NOW communication system for remote control, performed through a website. Since the car didn't physically move, having a physical remote felt a little hypocritical.</li>
+            <li> A new chassis design with a functioning method to transalte the gearbox output into the wheel motion. This was a pain to design because I confused diameter and radius while printing the chassis. I didn't want to reprint so had to get a little creative with my additional scaffolding visible in image 2.5</li>
+            <li> Grips on the wheels. I designed a wheel to be printed on the Prusa XL but we had run out of the nice tpu in the lab a couple of days ago. So I just decided to roll with tape and hot glue on my PLA printed rims because why not.</li>
+          </ul>
+
+        </p>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Shoutouts</h2>
+        <p>
+          I can't go any further without expressing my gratitude to the PS70 staff that were incredible sources of both emotional and informational support. Victor, Kassia, Bobby, and Jessica were so incredibly helpful throughout the entire project and I am unedingly grateful for their help. Also so grateful to Nathan, Tolu, Emma, and the all the people in the class for making this an amazing semester. The warmth I felt in the class as everyone grinded their projects at absurd times of the night was so beautiful, such an incredible way to end college.
+        </p>
+      </div>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Demo Videos</h2>
+        <p>Here, you see 3 major things. First the toggling servos places under the gears in action. Second the speed variation for the gears, you can observe the gears going through GR 0.33, 1.67, and 0.56 in the video. Finally, an extended run at 0.33 highlighting the top speed. Given the car couldn't move because of the loss of torque through the gears, I would go back and include a version that really magnifies the torque to see if that would drive the car.</p>
+        <div class="final-video-row" data-animate>
+          <div class="video-embed">
+            <video controls playsinline preload="metadata" aria-label="Gear moving demo video">
+              <source src="../assets/final_proj/gear_moving.MOV" type="video/quicktime" />
+            </video>
+          </div>
+          <div class="video-embed">
+            <video controls playsinline preload="metadata" aria-label="Wheels speed change demo video">
+              <source src="../assets/final_proj/wheels_speed_change.mov" type="video/quicktime" />
+            </video>
+          </div>
+          <div class="video-embed">
+            <video controls playsinline preload="metadata" aria-label="Fastest config demo video">
+              <source src="../assets/final_proj/fastest_config.mov" type="video/quicktime" />
+            </video>
+          </div>
         </div>
       </div>
-    </section> -->
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Photo Gallery</h2>
+        <h3>Big Picture</h3>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/final_proj/start.jpg" alt="Start photo 1" />
+          <img src="../assets/final_proj/start2.jpg" alt="Start photo 2" />
+          <img src="../assets/final_proj/start3.jpg" alt="Start photo 3" />
+          <img src="../assets/final_proj/start4.jpg" alt="Start photo 4" />
+          <img src="../assets/final_proj/start5.jpg" alt="Start photo 5" />
+          <img src="../assets/final_proj/start6.jpg" alt="Start photo 6" />
+        </div>
+        <h3>Zoomed In</h3>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/final_proj/mid.jpg" alt="Mid photo 1" />
+          <img src="../assets/final_proj/mid2.jpg" alt="Mid photo 2" />
+          <img src="../assets/final_proj/mid3.jpg" alt="Mid photo 3" />
+          <img src="../assets/final_proj/mid4.jpg" alt="Mid photo 4" />
+          <img src="../assets/final_proj/mid5.jpg" alt="Mid photo 5" />
+        </div>
+        <h3>Random but Interesting</h3>
+        <div class="simple-gallery" data-animate>
+          <img src="../assets/final_proj/end.jpg" alt="End photo 1" />
+          <img src="../assets/final_proj/end2.jpg" alt="End photo 2" />
+          <img src="../assets/final_proj/end3.jpg" alt="End photo 3" />
+          <img src="../assets/final_proj/end4.jpg" alt="End photo 4" />
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>STL Gallery</h2>
+        <div class="stl-gallery" data-animate>
+          <article class="stl-card" data-stl-src="../assets/final_proj/gear.stl" data-stl-title="1. Gear STL">
+            <span class="gallery-number">1</span>
+            <canvas id="stl-gallery-1" aria-label="Gear STL preview"></canvas>
+            <div class="stl-card-footer">
+              <p>Gear</p>
+              <button class="stl-expand" type="button">Expand</button>
+            </div>
+          </article>
+          <article class="stl-card" data-stl-src="../assets/final_proj/new_chassis.stl" data-stl-title="2. New chassis STL">
+            <span class="gallery-number">2</span>
+            <canvas id="stl-gallery-2" aria-label="New chassis STL preview"></canvas>
+            <div class="stl-card-footer">
+              <p>New Chassis</p>
+              <button class="stl-expand" type="button">Expand</button>
+            </div>
+          </article>
+          <article class="stl-card" data-stl-src="../assets/final_proj/old_chassis.stl" data-stl-title="3. Old chassis STL">
+            <span class="gallery-number">3</span>
+            <canvas id="stl-gallery-3" aria-label="Old chassis STL preview"></canvas>
+            <div class="stl-card-footer">
+              <p>Old Chassis</p>
+              <button class="stl-expand" type="button">Expand</button>
+            </div>
+          </article>
+          <article class="stl-card" data-stl-src="../assets/final_proj/Wheel_try.stl" data-stl-title="4. Wheel STL">
+            <span class="gallery-number">4</span>
+            <canvas id="stl-gallery-4" aria-label="Wheel STL preview"></canvas>
+            <div class="stl-card-footer">
+              <p>Wheel</p>
+              <button class="stl-expand" type="button">Expand</button>
+            </div>
+          </article>
+          <article class="stl-card" data-stl-src="../assets/final_proj/box.stl" data-stl-title="5. Box STL">
+            <span class="gallery-number">5</span>
+            <canvas id="stl-gallery-5" aria-label="Box STL preview"></canvas>
+            <div class="stl-card-footer">
+              <p>Box</p>
+              <button class="stl-expand" type="button">Expand</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Code</h2>
+        <details class="code-details">
+          <summary>Receiver</summary>
+          <div class="code-block">
+            <pre><code data-code-src="../assets/final_proj/code2.ino">Loading code...</code></pre>
+          </div>
+        </details>
+        <details class="code-details">
+          <summary>Controller</summary>
+          <div class="code-block">
+            <pre><code data-code-src="../assets/final_proj/code1.ino">Loading code...</code></pre>
+          </div>
+        </details>
+      </div>
+    </section>
 
     <footer class="site-footer">
       <div class="container">
@@ -52,5 +319,199 @@
     </footer>
 
     <script src="../script.js"></script>
+    <script>
+      const lightbox = document.createElement("div");
+      lightbox.className = "gallery-lightbox";
+      lightbox.innerHTML = `
+        <button class="gallery-lightbox-close" type="button" aria-label="Close expanded image">&times;</button>
+        <img alt="" />
+        <p></p>
+      `;
+      document.body.appendChild(lightbox);
+
+      const lightboxImage = lightbox.querySelector("img");
+      const lightboxCaption = lightbox.querySelector("p");
+
+      function closeLightbox() {
+        lightbox.classList.remove("is-open");
+        lightboxImage.removeAttribute("src");
+        lightboxImage.alt = "";
+        lightboxCaption.textContent = "";
+      }
+
+      document.querySelectorAll(".simple-gallery").forEach((gallery, galleryIndex) => {
+        gallery.querySelectorAll("img").forEach((image, index) => {
+          const item = document.createElement("button");
+          item.className = "gallery-item";
+          item.type = "button";
+          item.setAttribute("aria-label", `Expand ${image.alt}`);
+          image.parentNode.insertBefore(item, image);
+          item.appendChild(image);
+
+          const number = document.createElement("span");
+          number.className = "gallery-number";
+          number.textContent = `${galleryIndex + 1}.${index + 1}`;
+          item.appendChild(number);
+
+          item.addEventListener("click", () => {
+            lightboxImage.src = image.src;
+            lightboxImage.alt = image.alt;
+            lightboxCaption.textContent = image.alt;
+            lightbox.classList.add("is-open");
+          });
+        });
+      });
+
+      lightbox.addEventListener("click", (event) => {
+        if (event.target === lightbox || event.target.classList.contains("gallery-lightbox-close")) {
+          closeLightbox();
+        }
+      });
+
+      document.querySelectorAll("[data-code-src]").forEach(async (codeBlock) => {
+        try {
+          const response = await fetch(codeBlock.dataset.codeSrc);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          codeBlock.textContent = await response.text();
+        } catch (error) {
+          codeBlock.textContent = `Unable to load code snippet: ${error.message}`;
+        }
+      });
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+      import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+      const stlLightbox = document.createElement("div");
+      stlLightbox.className = "stl-lightbox";
+      stlLightbox.innerHTML = `
+        <button class="stl-lightbox-close" type="button" aria-label="Close expanded STL">&times;</button>
+        <div class="stl-lightbox-panel">
+          <canvas id="stl-lightbox-canvas" aria-label="Expanded STL preview"></canvas>
+          <p class="stl-lightbox-caption"></p>
+        </div>
+      `;
+      document.body.appendChild(stlLightbox);
+
+      let expandedStlViewer = null;
+
+      function initStlViewer(canvas, filePath) {
+        const container = canvas.parentElement;
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b1220);
+
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.set(0, 0, 120);
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(40, 60, 80);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        const loader = new STLLoader();
+        loader.load(
+          filePath,
+          (geometry) => {
+            geometry.computeVertexNormals();
+            geometry.center();
+            const material = new THREE.MeshStandardMaterial({
+              color: 0xf66d14,
+              metalness: 0.1,
+              roughness: 0.35,
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            const box = new THREE.Box3().setFromObject(mesh);
+            const size = new THREE.Vector3();
+            const center = new THREE.Vector3();
+            box.getSize(size);
+            box.getCenter(center);
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = (camera.fov * Math.PI) / 180;
+            const cameraZ = Math.abs((maxDim / 2) / Math.tan(fov / 2)) * 1.45;
+
+            camera.position.set(center.x, center.y, cameraZ);
+            camera.near = maxDim / 100;
+            camera.far = maxDim * 10;
+            camera.updateProjectionMatrix();
+            controls.target.copy(center);
+            controls.update();
+          },
+          undefined,
+          (error) => {
+            console.error(`Failed to load STL (${filePath}):`, error);
+          }
+        );
+
+        const resize = () => {
+          const width = container.clientWidth;
+          const height = Math.max(260, Math.round(width * 0.64));
+          renderer.setSize(width, height, false);
+          camera.aspect = width / height;
+          camera.updateProjectionMatrix();
+        };
+
+        const render = () => {
+          controls.update();
+          renderer.render(scene, camera);
+        };
+
+        window.addEventListener("resize", resize);
+        resize();
+        renderer.setAnimationLoop(render);
+
+        return {
+          dispose() {
+            window.removeEventListener("resize", resize);
+            renderer.setAnimationLoop(null);
+            renderer.dispose();
+          },
+        };
+      }
+
+      document.querySelectorAll(".stl-card").forEach((card) => {
+        const canvas = card.querySelector("canvas");
+        initStlViewer(canvas, card.dataset.stlSrc);
+
+        card.querySelector(".stl-expand").addEventListener("click", () => {
+          if (expandedStlViewer) expandedStlViewer.dispose();
+          stlLightbox.classList.add("is-open");
+          stlLightbox.querySelector(".stl-lightbox-caption").textContent = card.dataset.stlTitle;
+          expandedStlViewer = initStlViewer(
+            stlLightbox.querySelector("#stl-lightbox-canvas"),
+            card.dataset.stlSrc
+          );
+        });
+      });
+
+      function closeStlLightbox() {
+        stlLightbox.classList.remove("is-open");
+        if (expandedStlViewer) {
+          expandedStlViewer.dispose();
+          expandedStlViewer = null;
+        }
+      }
+
+      stlLightbox.addEventListener("click", (event) => {
+        if (event.target === stlLightbox || event.target.classList.contains("stl-lightbox-close")) {
+          closeStlLightbox();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeLightbox();
+          closeStlLightbox();
+        }
+      });
+    </script>
   </body>
 </html>
