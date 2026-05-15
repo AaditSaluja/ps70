@@ -33,7 +33,7 @@
         width: 100%;
         height: 100%;
         border: 0;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       .stl-gallery {
@@ -199,17 +199,17 @@
         <div class="final-video-row" data-animate>
           <div class="video-embed">
             <video controls playsinline preload="metadata" aria-label="Gear moving demo video">
-              <source src="../assets/final_proj/gear_moving.mp4" type="video/mp4" />
+              <source src="../assets/final_proj/gear_moving.MOV" type="video/quicktime" />
             </video>
           </div>
           <div class="video-embed">
             <video controls playsinline preload="metadata" aria-label="Wheels speed change demo video">
-              <source src="../assets/final_proj/wheels_speed_change.mp4" type="video/mp4" />
+              <source src="../assets/final_proj/wheels_speed_change.mov" type="video/quicktime" />
             </video>
           </div>
           <div class="video-embed">
             <video controls playsinline preload="metadata" aria-label="Fastest config demo video">
-              <source src="../assets/final_proj/fastest_config.mp4" type="video/mp4" />
+              <source src="../assets/final_proj/fastest_config.mov" type="video/quicktime" />
             </video>
           </div>
         </div>
@@ -221,6 +221,7 @@
         <h2>Photo Gallery</h2>
         <h3>Big Picture</h3>
         <div class="simple-gallery" data-animate>
+          <p>The one thing I was pretty happy about was how the generaly chassis came together. One of things I mentioned in the first week was my wish to build something that comes together smoothly. While it was nto smooth, I was happy to design a chassis and gearbox that I felt wasn't super jank and living off of hot glue. Most of the hot glue here is precautionary haha. Things are press fit and screwed in. I was specially happy at being able to mount the servos neatly right under the gears. Having them be invisible on first glance felt nice. Further, pulling off the 90 degree translation in a decent looking way was both surprising and a source of joy while I was struggling to find a bevel gear design that worked. Overall I ended up with ~12 variations of my spur gears and ~4 variations of the bevel gears.</p>
           <img src="../assets/final_proj/start.jpg" alt="Start photo 1" />
           <img src="../assets/final_proj/start2.jpg" alt="Start photo 2" />
           <img src="../assets/final_proj/start3.jpg" alt="Start photo 3" />
@@ -237,12 +238,20 @@
           <img src="../assets/final_proj/mid5.jpg" alt="Mid photo 5" />
         </div>
         <h3>Random but Interesting</h3>
+        <p>An unholy amount of filing and wd40 went into getting the gears moving. The biggest challenge was by far managing the friction and inconsistencies with these very small gears. In the 2 speed MVP, the gears had a lot more room for error. However, here the gears got stuck very regularly and I had to get clever to get the system working. I tried a bunch of structural things. like a very precisely designed gearbox, including a tolerance in the actual gears, varying gear thickness and pitch for the free moving rings, etc. All of these helped but at the end some of the work was also due to lubricating the system, filing some of the edges, and hand carving the gear tolerance. By tolerance, I mean filing the gears very slowly till they start moving like butter (chunky peanut butter in this case).</p>
         <div class="simple-gallery" data-animate>
           <img src="../assets/final_proj/end.jpg" alt="End photo 1" />
           <img src="../assets/final_proj/end2.jpg" alt="End photo 2" />
           <img src="../assets/final_proj/end3.jpg" alt="End photo 3" />
           <img src="../assets/final_proj/end4.jpg" alt="End photo 4" />
         </div>
+      </div>
+    </section>
+
+    <section class="project-content">
+      <div class="container blog-flow">
+        <h2>Takeaways</h2>
+        <p>If I had to buikd this project again, I would first of all not use a dc motor and would like to mill my gears. Or maybe buy moulded gears in the sizes I want. That reliability would have made my life much easier. Further, I would focus on implementing the Ackermann steering because I found it so cool but could never get around to it. Finally, I would invest all my life's savings into buying bearings. So many bearings. So many bushings. </p>
       </div>
     </section>
 
